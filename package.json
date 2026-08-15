@@ -9,7 +9,8 @@
     "start": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "data": "node scripts/build-wages.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.5",

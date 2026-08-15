@@ -1,0 +1,29 @@
+# Líneas de referencia que se dibujan sobre el gráfico.
+#
+# `confirmed: true` marca las cifras que he podido verificar en fuentes públicas del
+# INE; el resto son de apoyo y build_dataset.py las etiqueta como tales.
+
+markers:
+  - id: smi
+    label: SMI
+    long_label: Salario mínimo interprofesional
+    value: 14000
+    year: 2022
+    note: 1.000 €/mes en 14 pagas
+    confirmed: true
+
+  - id: mediana
+    label: Mediana
+    long_label: Mediana del salario bruto anual en España
+    value: 22400
+    year: 2022
+    note: mitad de los asalariados cobra menos
+    confirmed: false
+
+  - id: media
+    label: Media
+    long_label: Ganancia media anual por trabajador
+    value: 26948.87
+    year: 2022
+    note: EES 2022, dato definitivo del INE
+    confirmed: true

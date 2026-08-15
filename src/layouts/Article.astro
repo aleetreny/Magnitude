@@ -150,6 +150,9 @@ const stamp = date.toISOString().slice(0, 10);
 
   .breadcrumb .cat {
     color: var(--accent);
+    /* Padded to a 34px tap target without moving the baseline. */
+    padding: 11px 2px;
+    margin: -11px -2px;
     border-bottom: 1px solid transparent;
     transition: border-color 260ms ease;
   }

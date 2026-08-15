@@ -1,0 +1,706 @@
+---
+import { scaleLinear } from 'd3-scale';
+import { SERIES } from '../../lib/chart';
+import {
+  DEFAULT_SELECTION,
+  MAX_SELECTED,
+  MEASURED_FROM,
+  MEASURED_TO,
+  WAGES,
+  formatEuro,
+  occupationsByFamily,
+  type Occupation,
+} from '../../lib/wages';
+
+const groups = occupationsByFamily();
+const defaults = DEFAULT_SELECTION.map((id) => WAGES.occupations.find((o) => o.id === id)!).filter(
+  Boolean,
+);
+
+// A still of the chart, rendered here at build time. It is what a reader
+// without JavaScript keeps, and what fills the frame for the moment before the
+// interactive one boots. Normalised 0–100 box, as everywhere else on the site.
+const hi = Math.max(...WAGES.occupations.flatMap((o) => o.q));
+const fx = scaleLinear().domain([1, 99]).range([0, 100]);
+const fy = scaleLinear().domain([0, hi]).nice().range([100, 0]);
+const still = (o: Occupation, from: number, to: number, everyNth = 1) => {
+  const pts: string[] = [];
+  for (let p = from; p <= to; p += everyNth) {
+    pts.push(`${fx(p).toFixed(2)},${fy(o.q[p - 1]!).toFixed(2)}`);
+  }
+  const end = `${fx(to).toFixed(2)},${fy(o.q[to - 1]!).toFixed(2)}`;
+  if (pts[pts.length - 1] !== end) pts.push(end);
+  return `M${pts.join('L')}`;
+};
+---
+
+<div class="wx" data-wage-explorer>
+  <div class="wx-modes">
+    <div class="wx-mode" data-wx-mode="scale">
+      <span class="wx-mode-label mono">Vertical axis</span>
+      <div class="wx-seg" role="group" aria-label="Vertical axis">
+        <button type="button" data-value="euros" aria-pressed="true">Euros</button>
+        <button type="button" data-value="log" aria-pressed="false">Logarithmic</button>
+      </div>
+    </div>
+    <div class="wx-mode" data-wx-mode="range">
+      <span class="wx-mode-label mono">Range</span>
+      <div class="wx-seg" role="group" aria-label="Percentile range">
+        <button type="button" data-value="full" aria-pressed="true">p1 – p99</button>
+        <button type="button" data-value="measured" aria-pressed="false">Measured only</button>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="wx-stage"
+    data-wx-stage
+    tabindex="0"
+    role="slider"
+    aria-label="Percentile within the occupation. Drag across the chart, or use the arrow keys."
+    aria-valuemin="1"
+    aria-valuemax="99"
+    aria-valuenow="50"
+  >
+    <div class="wx-fallback" data-wx-fallback>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Wage quantile curves for 49 occupations">
+        <g class="wx-f-ctx">
+          {
+            WAGES.occupations
+              .filter((o) => !DEFAULT_SELECTION.includes(o.id))
+              .map((o) => <path d={still(o, 1, 99, 6)} vector-effect="non-scaling-stroke" />)
+          }
+        </g>
+        {
+          defaults.map((o, i) => (
+            <g>
+              <path
+                d={still(o, 1, MEASURED_FROM)}
+                class="wx-f-line wx-f-modelled"
+                stroke={SERIES[i]}
+                vector-effect="non-scaling-stroke"
+              />
+              <path
+                d={still(o, MEASURED_FROM, MEASURED_TO)}
+                class="wx-f-line"
+                stroke={SERIES[i]}
+                vector-effect="non-scaling-stroke"
+              />
+              <path
+                d={still(o, MEASURED_TO, 99)}
+                class="wx-f-line wx-f-modelled"
+                stroke={SERIES[i]}
+                vector-effect="non-scaling-stroke"
+              />
+            </g>
+          ))
+        }
+      </svg>
+    </div>
+  </div>
+
+  <div class="wx-readout" data-wx-readout>
+    <p class="wx-readout-head mono">
+      At <span data-wx-p>p50</span> of each occupation<span data-wx-flag></span>
+    </p>
+    <ul data-wx-list>
+      {
+        [...defaults]
+          .sort((a, b) => b.q[49]! - a.q[49]!)
+          .map((o) => {
+            const slot = DEFAULT_SELECTION.indexOf(o.id);
+            return (
+              <li>
+                <span class="wx-key" style={`background:${SERIES[slot]}`} />
+                <span class="wx-ro-name">
+                  {o.label}
+                  {o.lowSample ? ' †' : ''}
+                </span>
+                <span class="wx-ro-value mono">{formatEuro(o.q[49]!)}</span>
+              </li>
+            );
+          })
+      }
+    </ul>
+  </div>
+
+  <div class="wx-picker" data-wx-picker>
+    {
+      groups.map((g) => (
+        <div class="wx-group">
+          <p class="wx-group-name mono">{g.label}</p>
+          <div class="wx-chips">
+            {g.items.map((o) => {
+              const at = DEFAULT_SELECTION.indexOf(o.id);
+              const on = at >= 0;
+              return (
+                <button
+                  type="button"
+                  class={on ? 'wx-chip is-on' : 'wx-chip'}
+                  data-occ={o.id}
+                  aria-pressed={on ? 'true' : 'false'}
+                  style={`--chip:${on ? SERIES[at] : 'transparent'}`}
+                  title={o.official}
+                >
+                  <span class="wx-chip-key" aria-hidden="true" />
+                  {o.label}
+                  {o.lowSample && <span class="wx-dagger"> †</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))
+    }
+  </div>
+
+  <p class="wx-status mono" data-wx-status aria-live="polite">
+    {defaults.length} of {WAGES.occupations.length} occupations · up to {MAX_SELECTED} at once, past which
+    the colours stop being tellable apart
+  </p>
+
+  <div class="wx-bells" data-wx-bells>
+    <p class="wx-bells-head mono">
+      The same trades as distributions — filled up to the percentile you are on
+    </p>
+  </div>
+
+  <details class="wx-numbers">
+    <summary class="mono">Show what the INE published</summary>
+    <div class="wx-table" data-wx-table>
+      <table>
+        <thead>
+          <tr>
+            <th>Occupation</th>
+            <th>p10</th>
+            <th>p25</th>
+            <th>p50</th>
+            <th>p75</th>
+            <th>p90</th>
+            <th>p90 ÷ p10</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            defaults.map((o) => (
+              <tr>
+                <td>
+                  {o.label}
+                  {o.lowSample ? ' †' : ''}
+                </td>
+                <td>{formatEuro(o.p['10'])}</td>
+                <td>{formatEuro(o.p['25'])}</td>
+                <td>{formatEuro(o.p['50'])}</td>
+                <td>{formatEuro(o.p['75'])}</td>
+                <td>{formatEuro(o.p['90'])}</td>
+                <td>×{o.spread.p90p10.toFixed(2)}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </details>
+</div>
+
+<script>
+  import { initWageExplorer } from '../../scripts/wage-explorer';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-wage-explorer]')) {
+    initWageExplorer(root);
+  }
+</script>
+
+<style>
+  .wx {
+    --wx-ctx: rgba(22, 24, 26, 0.09);
+    margin: 0;
+  }
+
+  /* ---------------------------------------------------------- controls */
+  .wx-modes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 30px;
+    align-items: center;
+    padding-bottom: 18px;
+  }
+
+  .wx-mode {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .wx-mode-label {
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: var(--ink-soft);
+  }
+
+  .wx-seg {
+    display: inline-flex;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 2px;
+  }
+
+  .wx-seg button {
+    appearance: none;
+    border: 0;
+    background: none;
+    border-radius: 999px;
+    padding: 8px 14px;
+    min-height: 34px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition:
+      background-color 200ms ease,
+      color 200ms ease;
+  }
+
+  .wx-seg button[aria-pressed='true'] {
+    background: var(--accent-wash);
+    color: var(--ink);
+  }
+
+  .wx-seg button:hover:not([aria-pressed='true']) {
+    color: var(--ink);
+  }
+
+  /* ------------------------------------------------------------ picker */
+  .wx-picker {
+    margin-top: 22px;
+    border-top: 1px solid var(--rule);
+    padding-top: 16px;
+    max-height: 232px;
+    overflow-y: auto;
+  }
+
+  .wx-group + .wx-group {
+    margin-top: 10px;
+  }
+
+  .wx-group-name {
+    margin: 0 0 6px;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    color: var(--ink-soft);
+    opacity: 0.75;
+  }
+
+  .wx-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .wx-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    appearance: none;
+    background: none;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 7px 12px;
+    min-height: 34px;
+    font-family: var(--display);
+    font-size: 13px;
+    line-height: 1;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition:
+      border-color 200ms ease,
+      color 200ms ease;
+  }
+
+  .wx-chip-key {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--chip, transparent);
+    box-shadow: inset 0 0 0 1px var(--rule);
+    flex: none;
+  }
+
+  .wx-chip.is-on {
+    color: var(--ink);
+    border-color: var(--chip);
+  }
+
+  .wx-chip.is-on .wx-chip-key {
+    box-shadow: none;
+  }
+
+  .wx-chip:hover:not(:disabled) {
+    color: var(--ink);
+  }
+
+  .wx-chip:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .wx-dagger {
+    color: var(--ink-soft);
+  }
+
+  .wx-status {
+    margin: 12px 0 0;
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    text-transform: none;
+  }
+
+  /* ------------------------------------------------------------- stage */
+  .wx-stage {
+    position: relative;
+    margin-top: 14px;
+    touch-action: pan-y;
+    cursor: crosshair;
+  }
+
+  .wx-stage:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  .wx-fallback svg {
+    display: block;
+    width: 100%;
+    height: 380px;
+  }
+
+  .wx-fallback .wx-f-ctx path {
+    fill: none;
+    stroke: var(--wx-ctx);
+    stroke-width: 1;
+  }
+
+  .wx-fallback .wx-f-line {
+    fill: none;
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .wx-fallback .wx-f-modelled {
+    stroke-dasharray: 3 3;
+  }
+</style>
+
+<style is:global>
+  /* The chart's own SVG is built at runtime, so its rules cannot be scoped. */
+  .wx .wx-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    user-select: none;
+  }
+
+  .wx .wx-context path {
+    fill: none;
+    stroke: var(--wx-ctx);
+    stroke-width: 1;
+  }
+
+  .wx .wx-context {
+    transition: opacity 300ms ease;
+  }
+
+  .wx .wx-context.is-hidden {
+    opacity: 0;
+  }
+
+  .wx .wx-modelled {
+    fill: var(--accent-wash);
+    opacity: 0.55;
+  }
+
+  .wx .wx-gridline {
+    stroke: var(--rule);
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+  }
+
+  .wx .wx-marker {
+    stroke: var(--ink);
+    stroke-width: 1;
+    stroke-opacity: 0.35;
+    stroke-dasharray: 2 4;
+  }
+
+  .wx .wx-marker-label,
+  .wx .wx-ytick,
+  .wx .wx-xtick,
+  .wx .wx-xcaption,
+  .wx .wx-bell-tick,
+  .wx .wx-bell-name {
+    font-family: var(--mono);
+    font-size: 10px;
+    fill: var(--ink-soft);
+  }
+
+  .wx .wx-marker-label {
+    /* Set from the left edge of the plot, where the curves are sparsest. */
+    text-anchor: start;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+
+  .wx .wx-ytick {
+    text-anchor: end;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wx .wx-xtick,
+  .wx .wx-bell-tick {
+    text-anchor: middle;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wx .wx-xcaption {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    fill: var(--ink-soft);
+  }
+
+  .wx .wx-line {
+    fill: none;
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .wx .wx-line-modelled {
+    stroke-dasharray: 3 4;
+  }
+
+  .wx .wx-hairline {
+    stroke: var(--ink);
+    stroke-width: 1;
+    stroke-opacity: 0.45;
+  }
+
+  /* Outside p10–p90 the reading is extrapolated, and the hairline says so. */
+  .wx .wx-hairline.is-modelled {
+    stroke-dasharray: 3 3;
+  }
+
+  .wx .wx-scrub-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    fill: var(--ink-soft);
+  }
+
+  .wx .wx-dot {
+    stroke: var(--paper);
+    stroke-width: 2;
+  }
+
+  .wx .wx-leader {
+    fill: none;
+    stroke-width: 1;
+    stroke-opacity: 0.45;
+  }
+
+  .wx .wx-label-name {
+    font-family: var(--display);
+    font-size: 13px;
+    fill: var(--ink);
+  }
+
+  .wx .wx-label-value {
+    font-family: var(--mono);
+    font-size: 11px;
+    fill: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wx .wx-bell-base {
+    stroke: var(--rule);
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+  }
+
+  .wx .wx-bell-line {
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+  }
+
+  .wx .wx-bell-mark {
+    stroke-width: 1.5;
+    stroke-opacity: 0.9;
+  }
+
+  .wx .wx-bell-name {
+    font-family: var(--display);
+    font-size: 12px;
+    fill: var(--ink);
+  }
+
+  .wx .wx-bell-name-right {
+    text-anchor: end;
+  }
+  /* ---- Rebuilt by the script on every change, so unscoped by necessity. ---- */
+  .wx .wx-readout ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 8px;
+  }
+
+  .wx .wx-readout li {
+    display: grid;
+    grid-template-columns: 10px 1fr auto;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 14px;
+  }
+
+  .wx .wx-key {
+    width: 10px;
+    height: 3px;
+    border-radius: 2px;
+    transform: translateY(-3px);
+  }
+
+  .wx .wx-ro-value {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wx .wx-table table {
+    width: 100%;
+    min-width: 520px;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .wx .wx-table th {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: right;
+    color: var(--ink-soft);
+    padding: 6px 0 6px 12px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .wx .wx-table th:first-child,
+  .wx .wx-table td:first-child {
+    text-align: left;
+    padding-left: 0;
+  }
+
+  .wx .wx-table td {
+    padding: 6px 0 6px 12px;
+    border-bottom: 1px solid var(--rule);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+
+<style>
+  /* ----------------------------------------------------------- readout */
+  .wx-readout {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .wx-readout-head {
+    margin: 0 0 10px;
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: var(--ink-soft);
+  }
+
+  /* On a wide screen the labels ride the curves, so the list would repeat them. */
+  @media (min-width: 900px) {
+    .wx-readout {
+      display: none;
+    }
+  }
+
+  /* ------------------------------------------------------------- bells */
+  .wx-bells {
+    margin-top: 26px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .wx-bells-head {
+    margin: 0 0 10px;
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: var(--ink-soft);
+    text-transform: none;
+  }
+
+  /* ------------------------------------------------------------- table */
+  .wx-numbers {
+    margin-top: 22px;
+  }
+
+  .wx-numbers summary {
+    font-size: 10px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    list-style: none;
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+  }
+
+  .wx-numbers summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .wx-numbers summary::before {
+    content: '+ ';
+    padding-right: 4px;
+  }
+
+  .wx-numbers[open] summary::before {
+    content: '– ';
+  }
+
+  .wx-table {
+    overflow-x: auto;
+  }
+
+  /* -------------------------------------------------------- narrow ---- */
+  @media (max-width: 899px) {
+    .wx-modes {
+      gap: 10px 18px;
+    }
+    .wx-mode {
+      gap: 8px;
+    }
+    /* 49 chips is a wall on a phone; the cap tightens further. */
+    .wx-picker {
+      max-height: 168px;
+    }
+    .wx-chip {
+      font-size: 12.5px;
+      padding: 7px 10px;
+    }
+    .wx-fallback svg {
+      height: 300px;
+    }
+  }
+</style>

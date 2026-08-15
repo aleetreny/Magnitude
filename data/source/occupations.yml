@@ -1,0 +1,279 @@
+# Selección curada de oficios.
+#
+# Nivel: subgrupos principales de la CNO-11, la máxima desagregación para la que el
+# INE publica distribución salarial. Por debajo (subgrupos de 3 dígitos, grupos
+# primarios de 4) no hay dato: quien enseña "el sueldo del piloto de aviación" está
+# mostrando la cifra de su subgrupo padre reetiquetada. Aquí no se hace eso.
+#
+# `ine` es el nombre EXACTO de la serie en la tabla 36830 y es la clave con la que
+# build_dataset.py la localiza; este fichero se genera resolviendo cada nombre contra
+# el crudo descargado, así que no puede haber erratas. La tabla no publica los códigos
+# CNO, sólo los nombres, de modo que aquí no se muestra ningún código: sería
+# inventárselo.
+#
+# `id`     clave interna estable (la página la usa para recordar la selección)
+# `label`  nombre corto que se pinta en el gráfico
+# `family` agrupación de color
+
+meta:
+  classification: CNO-11
+  level: subgrupos principales
+  note: >
+    La encuesta cubre asalariados por cuenta ajena. Quedan fuera los autónomos, y con
+    ellos los subgrupos de propietarios (camareros y comerciantes propietarios),
+    además del empleo doméstico y las ocupaciones militares, sin dato publicado.
+
+families:
+  direccion:      Dirección
+  profesional:    Profesiones con titulación superior
+  tecnico:        Técnicos y profesionales de apoyo
+  administrativo: Empleo administrativo
+  servicios:      Servicios, comercio y cuidados
+  oficios:        Oficios cualificados
+  elemental:      Ocupaciones elementales
+
+occupations:
+  - id: alta-direccion
+    label: Alta dirección
+    family: direccion
+    ine: "Miembros del poder ejecutivo y de los cuerpos legislativos; directivos de la Administración Pública y organizaciones de interés social; directores ejecutivos"
+
+  - id: direccion-comercial
+    label: Dirección administrativa
+    family: direccion
+    ine: "Directores de departamentos administrativos y comerciales"
+
+  - id: direccion-produccion
+    label: Dirección de producción
+    family: direccion
+    ine: "Directores de producción y operaciones"
+
+  - id: gerencia-hosteleria
+    label: Gerencia de hostelería
+    family: direccion
+    ine: "Directores y gerentes de empresas de alojamiento, restauración y comercio"
+
+  - id: salud
+    label: Medicina y sanidad
+    family: profesional
+    ine: "Profesionales de la salud"
+
+  - id: profesorado
+    label: Profesorado
+    family: profesional
+    ine: "Profesionales de la enseñanza infantil, primaria, secundaria y postsecundaria"
+
+  - id: otra-ensenanza
+    label: Otra enseñanza
+    family: profesional
+    ine: "Otros profesionales de la enseñanza"
+
+  - id: ingenieria
+    label: Ingeniería y ciencias
+    family: profesional
+    ine: "Profesionales de la ciencias físicas, químicas, matemáticas y de las ingenierías"
+
+  - id: derecho
+    label: Abogacía
+    family: profesional
+    ine: "Profesionales en derecho"
+
+  - id: organizacion
+    label: Organización de empresas
+    family: profesional
+    ine: "Especialistas en organización de la Administración Pública y de las empresas y en la comercialización"
+
+  - id: tic
+    label: Informática y TIC
+    family: profesional
+    ine: "Profesionales de las tecnologías de la información"
+
+  - id: ciencias-sociales
+    label: Ciencias sociales
+    family: profesional
+    ine: "Profesionales en ciencias sociales"
+
+  - id: cultura
+    label: Cultura y espectáculo
+    family: profesional
+    ine: "Profesionales de la cultura y el espectáculo"
+
+  - id: tecnicos-ingenieria
+    label: Técnicos de ingeniería
+    family: tecnico
+    ine: "Técnicos de las ciencias y de las ingenierías"
+
+  - id: supervisores
+    label: Supervisores de industria
+    family: tecnico
+    ine: "Supervisores en ingeniería de minas, de industrias manufactureras y de la construcción"
+
+  - id: tecnicos-sanitarios
+    label: Técnicos sanitarios
+    family: tecnico
+    ine: "Técnicos sanitarios y profesionales de las terapias alternativas"
+
+  - id: finanzas
+    label: Apoyo en finanzas
+    family: tecnico
+    ine: "Profesionales de apoyo en finanzas y matemáticas"
+
+  - id: comerciales
+    label: Comerciales y ventas
+    family: tecnico
+    ine: "Representantes, agentes comerciales y afines"
+
+  - id: apoyo-juridico
+    label: Apoyo jurídico y social
+    family: tecnico
+    ine: "Profesionales de apoyo de servicios jurídicos, sociales, culturales, deportivos y afines"
+
+  - id: tecnicos-tic
+    label: Técnicos TIC
+    family: tecnico
+    ine: "Técnicos de las tecnologías de la información y las comunicaciones (TIC)"
+
+  - id: contables
+    label: Administrativos contables
+    family: administrativo
+    ine: "Empleados en servicios contables, financieros, y de servicios de apoyo a la producción y al transporte"
+
+  - id: correos
+    label: Correos y bibliotecas
+    family: administrativo
+    ine: "Empleados de bibliotecas, servicios de correos y afines"
+
+  - id: administrativos
+    label: Administrativos
+    family: administrativo
+    ine: "Otros empleados administrativos sin tareas de atención al público"
+
+  - id: recepcion
+    label: Recepción y telefonía
+    family: administrativo
+    ine: "Empleados de agencias de viajes, recepcionistas y telefonistas; empleados de ventanilla y afines (excepto taquilleros)"
+
+  - id: restauracion
+    label: Camareros y cocineros
+    family: servicios
+    ine: "Trabajadores asalariados de los servicios de restauración"
+
+  - id: dependientes
+    label: Dependientes de comercio
+    family: servicios
+    ine: "Dependientes en tiendas y almacenes"
+
+  - id: vendedores
+    label: Vendedores
+    family: servicios
+    ine: "Vendedores (excepto en tiendas y almacenes)"
+
+  - id: cajeros
+    label: Cajeros y taquilleros
+    family: servicios
+    ine: "Cajeros y taquilleros (excepto bancos)"
+
+  - id: aux-enfermeria
+    label: Auxiliares de enfermería
+    family: servicios
+    ine: "Trabajadores de los cuidados a las personas en servicios de salud"
+
+  - id: otros-cuidados
+    label: Cuidados a personas
+    family: servicios
+    ine: "Otros trabajadores de los cuidados a las personas"
+
+  - id: servicios-personales
+    label: Peluquería y estética
+    family: servicios
+    ine: "Trabajadores de los servicios personales"
+
+  - id: proteccion
+    label: Protección y seguridad
+    family: servicios
+    ine: "Trabajadores de los servicios de protección y seguridad"
+
+  - id: agricolas
+    label: Agricultura cualificada
+    family: oficios
+    ine: "Trabajadores cualificados en actividades agrícolas"
+
+  - id: obra
+    label: Albañilería y obra
+    family: oficios
+    ine: "Trabajadores en obras estructurales de construcción y afines"
+
+  - id: acabados
+    label: Acabados y pintura
+    family: oficios
+    ine: "Trabajadores de acabado de construcciones e instalaciones (excepto electricistas), pintores y afines"
+
+  - id: soldadores
+    label: Soldadores y chapistas
+    family: oficios
+    ine: "Soldadores, chapistas, montadores de estructuras metálicas, herreros, elaboradores de herramientas y afines"
+
+  - id: mecanicos
+    label: Mecánicos de maquinaria
+    family: oficios
+    ine: "Mecánicos y ajustadores de maquinaria"
+
+  - id: electricistas
+    label: Electricistas
+    family: oficios
+    ine: "Trabajadores especializados en electricidad y electrotecnología"
+
+  - id: alimentacion
+    label: Industria alimentaria
+    family: oficios
+    ine: "Trabajadores de la industria de la alimentación, bebidas y tabaco"
+
+  - id: maquinaria-fija
+    label: Operadores de máquinas
+    family: oficios
+    ine: "Operadores de instalaciones y maquinaria fijas"
+
+  - id: maquinistas
+    label: Maquinaria pesada
+    family: oficios
+    ine: "Maquinistas de locomotoras, operadores de maquinaria agrícola y de equipos pesados móviles, y marineros"
+
+  - id: conductores
+    label: Conductores de camión
+    family: oficios
+    ine: "Conductores de vehículos para el transporte urbano o por carretera"
+
+  - id: limpieza
+    label: Personal de limpieza
+    family: elemental
+    ine: "Otro personal de limpieza"
+
+  - id: ayudantes-cocina
+    label: Ayudantes de cocina
+    family: elemental
+    ine: "Ayudantes de preparación de alimentos"
+
+  - id: residuos
+    label: Recogida de residuos
+    family: elemental
+    ine: "Recogedores de residuos urbanos, vendedores callejeros y otras ocupaciones elementales en servicios"
+
+  - id: peones-agrarios
+    label: Peones agrarios
+    family: elemental
+    ine: "Peones agrarios, forestales y de la pesca"
+
+  - id: peones-construccion
+    label: Peones de construcción
+    family: elemental
+    ine: "Peones de la construcción y de la minería"
+
+  - id: peones-industria
+    label: Peones de fábrica
+    family: elemental
+    ine: "Peones de las industrias manufactureras"
+
+  - id: peones-transporte
+    label: Peones de transporte
+    family: elemental
+    ine: "Peones del transporte, descargadores y reponedores"

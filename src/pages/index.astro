@@ -1,10 +1,14 @@
 ---
 import Shell from '../layouts/Shell.astro';
 import Wall from '../components/Wall.astro';
-import { CATEGORIES } from '../data/categories';
+import { CATEGORIES, getCategory } from '../data/categories';
+import { publishedPosts } from '../lib/questions';
 
-// The home page opens on the first category; the bands take it from there.
-const first = CATEGORIES[0]!;
+// Home opens wherever the newest answered question is, so the first thing a
+// visitor sees is a wall with something to click. Falls back to the first
+// category while nothing is published.
+const newest = (await publishedPosts())[0];
+const first = newest ? getCategory(newest.data.category) : CATEGORIES[0]!;
 ---
 
 <Shell

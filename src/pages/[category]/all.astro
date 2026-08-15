@@ -23,7 +23,7 @@ const current = data.find((d) => d.id === c.id)!;
 >
   <header class="head">
     <Wordmark />
-    <a class="home mono" href={url()}>← Home</a>
+    <a class="home mono" href={url()}><span>← Home</span></a>
   </header>
 
   <div class="title">
@@ -70,6 +70,13 @@ const current = data.find((d) => d.id === c.id)!;
     font-weight: 500;
     letter-spacing: 0.14em;
     opacity: 0.6;
+    /* Padded out to a real tap target; the negative margin keeps the
+       underline sitting where the design puts it. */
+    padding: 11px 2px 4px;
+    margin: -11px -2px -4px;
+  }
+
+  .home span {
     border-bottom: 1px solid currentColor;
     padding-bottom: 3px;
   }
@@ -205,6 +212,13 @@ const current = data.find((d) => d.id === c.id)!;
   }
 
   @media (max-width: 720px) {
+    /* At 320px the wordmark and the link cannot share a line without the link
+       sliding under the colour bands. */
+    .head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
     .title {
       padding: 6vh 0 4vh;
       flex-direction: column;

@@ -6,11 +6,13 @@ interface Props {
   title: string;
   /** Dataset id or source line, set below the chart. */
   source: string;
+  /** Break out past the measure on large screens. For a chart that needs room. */
+  wide?: boolean;
 }
-const { n, title, source } = Astro.props;
+const { n, title, source, wide = false } = Astro.props;
 ---
 
-<figure class="fig">
+<figure class:list={['fig', wide && 'fig-wide']}>
   <p class="cap mono">Fig. {n} · {title}</p>
   <div class="plot"><slot /></div>
   <figcaption class="src mono">{source}</figcaption>
@@ -25,6 +27,16 @@ const { n, title, source } = Astro.props;
   @media (min-width: 1200px) {
     .fig {
       margin-left: -80px;
+    }
+  }
+
+  /* A wide figure leaves the measure behind entirely and centres itself on the
+     viewport. The prose stays at its reading width either side of it. */
+  @media (min-width: 1040px) {
+    .fig-wide {
+      width: min(1120px, 100vw - 96px);
+      margin-left: calc(50% - min(1120px, 100vw - 96px) / 2);
+      margin-right: 0;
     }
   }
 

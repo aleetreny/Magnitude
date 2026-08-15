@@ -12,9 +12,10 @@ Three surfaces:
 | `/[category]/all` | The archive — every question in the category as a numbered editorial list. |
 | `/[category]/[slug]` | The article — mostly white and black, so the charts own the colour. |
 
-Astro + MDX, static output, hand-written CSS, no UI framework. Charts are
-computed with D3 scales at build time and shipped as inline SVG, so a post is
-plain HTML by the time it reaches a browser.
+Astro + MDX, static output, hand-written CSS, no UI framework. Most charts are
+computed with D3 scales at build time and shipped as inert inline SVG, so a post
+is plain HTML by the time it reaches a browser. One — the wage explorer — is
+interactive, and still server-renders a still for readers without JavaScript.
 
 ---
 
@@ -25,6 +26,7 @@ npm install
 npm run dev      # http://localhost:4321/Magnitude
 npm run build    # type-checks, then writes dist/
 npm run preview  # serve dist/ exactly as it will be served in production
+npm run data     # rebuild src/data/wages.json from data/source/
 ```
 
 ---
@@ -101,8 +103,9 @@ column below 1200px.
 
 ## Charts
 
-Two components cover most questions. Both compute their geometry with D3 scales
-at build time; neither ships any JavaScript.
+Three components. `BarChart` and `LineChart` compute their geometry with D3
+scales at build time and ship no JavaScript at all; `WageExplorer` is the one
+interactive chart on the site.
 
 **`<BarChart>`** — comparing magnitude across named things.
 
@@ -116,6 +119,10 @@ at build time; neither ships any JavaScript.
   max={20}          // optional; otherwise the largest value, nice()'d
 />
 ```
+
+**`<WageExplorer>`** — the interactive quantile explorer built for the wages
+post. It reads `src/data/wages.json` and needs no props. The only chart on the
+site that ships JavaScript; everything else is inert SVG.
 
 **`<LineChart>`** — change over a continuous x (time, months, age).
 
@@ -142,12 +149,16 @@ chart, so no value is reachable only by looking.
 
 These are not stylistic preferences; breaking them makes charts that mislead.
 
-- **Two series colours, in order** — `#2a78d6` then `#eb6834`, set in
-  `src/lib/chart.ts`. They are validated as a categorical pair against this
-  site's paper (`#fdfdfc`): lightness band, chroma floor, protanopia/deuteranopia
-  separation (ΔE 24.7), normal-vision separation (ΔE 33.6) and ≥ 3:1 contrast.
-  **A third series is not a third colour** — fold the tail into "other", split
-  into two charts, or change the form.
+- **Six series colours, in order**, set in `src/lib/chart.ts`. They are
+  validated as a categorical set against this site's paper (`#fdfdfc`):
+  lightness band, chroma floor, protanopia/deuteranopia separation (worst
+  adjacent pair ΔE 9.1) and normal-vision separation (ΔE 19.6). Slots 3–5 sit
+  below 3:1 on the paper, which is legal only alongside visible direct labels or
+  a table view — so any chart reaching four series must ship one. **A seventh
+  series is not a seventh colour** — fold the tail into "other", split into two
+  charts, or change the form.
+- **A colour belongs to a series, not to a row number.** Removing one series
+  must never repaint the others.
 - **One series, one colour.** Bar length already encodes the value; colouring
   each bar differently spends the identity channel on nothing.
 - **Never two y-axes.** Two measures of different scale are two charts, or both
@@ -158,6 +169,41 @@ These are not stylistic preferences; breaking them makes charts that mislead.
   implies magnitude from zero.
 - A legend appears automatically for two or more series; a single series gets
   none, because the caption already names it.
+
+---
+
+### One catch worth knowing
+
+Astro scopes a component's `<style>` by stamping a `data-astro-cid-*` attribute
+on the elements it renders. Anything **built by a script at runtime** never gets
+that attribute, so its rules must live in a `<style is:global>` block, fenced
+behind the component's root class. `WageExplorer.astro` does this for its SVG,
+its readout rows and its table. Put a runtime element's styles in the scoped
+block and they will simply not apply.
+
+---
+
+## The data behind the wages post
+
+`data/source/` holds the chain, so every figure on the page can be traced:
+
+| File | What it is |
+|---|---|
+| `ine-36830.json` | the raw INE API response, exactly as it came |
+| `salaries.json` | the Python pipeline's output: curves, densities, provenance |
+| `occupations.yml` | the curated occupation list, each matched to its exact INE series name |
+| `reference.yml` | the minimum wage; national median and mean come from the INE itself |
+| `curves.py`, `build_dataset.py` | the reconstruction, kept for reference |
+
+`npm run data` compacts `salaries.json` into `src/data/wages.json`, which is
+what the chart loads. It **refuses to write** if any reconstructed percentile
+drifts more than 0.5% from the figure the INE published.
+
+The five published percentiles per occupation are the only measured numbers.
+The curve between them is a monotone PCHIP interpolation in log-salary; outside
+p10–p90 nothing is published and the tails continue the slope of the outermost
+measured pair. The chart draws those stretches dashed on shaded ground and the
+scrubber's hairline goes dotted when you cross into them.
 
 ---
 

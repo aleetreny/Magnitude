@@ -257,9 +257,20 @@ the bands.
 ## Deploying
 
 Pushing to `main` builds and publishes through
-`.github/workflows/deploy.yml`. Once, before the first deploy:
+`.github/workflows/deploy.yml`. Two settings have to be right, and both are in
+the repository, not in this code:
 
-**Settings → Pages → Build and deployment → Source: GitHub Actions.**
+1. **Settings → Pages → Build and deployment → Source: GitHub Actions**
+   (not "Deploy from a branch").
+2. **Settings → General → Default branch: `main`.**
+
+The second one is the trap. When Pages is set to the Actions source, GitHub
+creates a `github-pages` environment whose deployment policy admits **only the
+default branch**. Deploy from anything else and the `deploy` job fails in about
+a second with no runner assigned and no logs at all — while the `build` job goes
+green and uploads its artifact, which makes it look like a Pages outage rather
+than a settings problem. If you ever see that signature, check which branch is
+the default before looking anywhere else.
 
 The site is served from a subpath, so `astro.config.mjs` sets
 `site: 'https://aleetreny.github.io'` and `base: '/Magnitude'`. Always build

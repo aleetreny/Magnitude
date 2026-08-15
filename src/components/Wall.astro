@@ -1,0 +1,290 @@
+---
+import Wordmark from './Wordmark.astro';
+import { CATEGORIES } from '../data/categories';
+import { WALL_SIZE, wallData } from '../lib/questions';
+
+interface Props {
+  active: string;
+}
+const { active } = Astro.props;
+
+const data = await wallData();
+const current = data.find((c) => c.id === active)!;
+const slots = Array.from({ length: WALL_SIZE }, (_, i) => current.questions[i]);
+const hud = (c: (typeof data)[number]) =>
+  `${String(c.index + 1).padStart(2, '0')} / ${String(CATEGORIES.length).padStart(2, '0')} · ${c.name} · ${c.total} questions`;
+---
+
+<header class="head">
+  <Wordmark link={false} />
+  <p class="hud mono run" data-hud>{hud(current)}</p>
+</header>
+
+<div class="stage" data-stage>
+  <ol class="wall" data-wall>
+    {
+      slots.map((q, i) => (
+        <li class="slot run" data-slot={i} hidden={!q}>
+          <a class="q" href={q?.href}>
+            {q?.question}
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</div>
+
+<footer class="foot">
+  <a class="pill" data-archive href={current.archiveHref}>
+    <span>See all</span><span class="arrow">↗</span>
+  </a>
+  <p class="hint mono">Drag or scroll to switch</p>
+</footer>
+
+{/* Every category's ten questions, so the switcher never waits on the network. */}
+<script is:inline type="application/json" data-wall-data set:html={JSON.stringify(data)} />
+
+<style>
+  .head {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    padding: 30px var(--gutter) 0 var(--edge);
+  }
+
+  .hud {
+    margin: 0;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    opacity: 0.6;
+  }
+
+  .hud.run {
+    animation: hud 700ms var(--ease) 240ms backwards;
+  }
+
+  @keyframes hud {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+      filter: blur(6px);
+    }
+    92% {
+      filter: blur(0);
+    }
+    100% {
+      opacity: 0.6;
+      transform: none;
+    }
+  }
+
+  .stage {
+    position: relative;
+    z-index: 3;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    padding: 2.4vh var(--gutter) 2.4vh var(--edge);
+    overflow: hidden;
+  }
+
+  .wall {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: 28px;
+    row-gap: min(1.6vh, 15px);
+    transform-origin: center center;
+  }
+
+  .slot[hidden] {
+    display: none;
+  }
+
+  .q {
+    display: inline-block;
+    font-family: var(--display);
+    font-weight: 400;
+    text-wrap: pretty;
+    transform-origin: left center;
+    transition: transform 260ms var(--ease);
+  }
+
+  .q[href]:hover,
+  .q[href]:focus-visible {
+    transform: scale(1.05);
+  }
+
+  /* Ten deliberately uneven slots. Sizes, tracking and resting opacity are the
+     design's; the wrapper animates 0 → 1 on top of them. */
+  .slot:nth-child(1) { grid-column: 1 / span 7; }
+  .slot:nth-child(1) .q { font-size: min(4.1vw, 8.4vh, 62px); line-height: 1.04; letter-spacing: -0.038em; }
+
+  .slot:nth-child(2) { grid-column: 9 / span 4; align-self: end; }
+  .slot:nth-child(2) .q { font-size: min(1.7vw, 3.5vh, 23px); line-height: 1.2; letter-spacing: -0.018em; opacity: 0.74; }
+
+  .slot:nth-child(3) { grid-column: 2 / span 3; }
+  .slot:nth-child(3) .q { font-size: min(1.35vw, 2.8vh, 17px); line-height: 1.24; letter-spacing: -0.008em; opacity: 0.58; }
+
+  .slot:nth-child(4) { grid-column: 5 / span 6; }
+  .slot:nth-child(4) .q { font-size: min(3vw, 6.1vh, 44px); line-height: 1.08; letter-spacing: -0.03em; }
+
+  .slot:nth-child(5) { grid-column: 1 / span 4; }
+  .slot:nth-child(5) .q { font-size: min(1.8vw, 3.7vh, 25px); line-height: 1.18; letter-spacing: -0.018em; opacity: 0.74; }
+
+  .slot:nth-child(6) { grid-column: 10 / span 3; }
+  .slot:nth-child(6) .q { font-size: min(1.35vw, 2.8vh, 17px); line-height: 1.24; letter-spacing: -0.008em; opacity: 0.58; }
+
+  .slot:nth-child(7) { grid-column: 2 / span 6; }
+  .slot:nth-child(7) .q { font-size: min(2.7vw, 5.5vh, 39px); line-height: 1.1; letter-spacing: -0.028em; }
+
+  .slot:nth-child(8) { grid-column: 9 / span 4; align-self: start; }
+  .slot:nth-child(8) .q { font-size: min(1.7vw, 3.5vh, 23px); line-height: 1.18; letter-spacing: -0.018em; opacity: 0.74; }
+
+  .slot:nth-child(9) { grid-column: 1 / span 3; }
+  .slot:nth-child(9) .q { font-size: min(1.25vw, 2.6vh, 16px); line-height: 1.26; opacity: 0.58; }
+
+  .slot:nth-child(10) { grid-column: 5 / span 4; }
+  .slot:nth-child(10) .q { font-size: min(1.35vw, 2.8vh, 17px); line-height: 1.24; letter-spacing: -0.008em; opacity: 0.58; }
+
+  /* Entrances. `backwards`, never `both`: a retained `filter: blur(0)` keeps a
+     GPU layer alive and permanently degrades the antialiasing of the type. No
+     filter or clip-path survives into the 100% frame. */
+  .slot.run { animation-duration: 1150ms; animation-timing-function: var(--ease); animation-fill-mode: backwards; }
+  .slot.run:nth-child(1) { animation-name: e1; animation-delay: 60ms; }
+  .slot.run:nth-child(2) { animation-name: e2; animation-delay: 300ms; }
+  .slot.run:nth-child(3) { animation-name: e3; animation-delay: 470ms; }
+  .slot.run:nth-child(4) { animation-name: e4; animation-delay: 150ms; }
+  .slot.run:nth-child(5) { animation-name: e5; animation-delay: 380ms; }
+  .slot.run:nth-child(6) { animation-name: e6; animation-delay: 520ms; }
+  .slot.run:nth-child(7) { animation-name: e7; animation-delay: 220ms; }
+  .slot.run:nth-child(8) { animation-name: e8; animation-delay: 340ms; }
+  .slot.run:nth-child(9) { animation-name: e9; animation-delay: 560ms; }
+  .slot.run:nth-child(10) { animation-name: e10; animation-delay: 440ms; }
+
+  @keyframes e1 {
+    0% { opacity: 0; transform: translate(-14vw, 26px) scale(0.82) rotate(-3deg); filter: blur(16px); clip-path: circle(0% at 8% 60%); }
+    60% { filter: blur(0); }
+    92% { filter: blur(0); clip-path: circle(160% at 8% 60%); }
+    100% { opacity: 1; transform: none; }
+  }
+  @keyframes e2 {
+    0% { opacity: 0; transform: translate(9vw, -34px) scale(1.22); filter: blur(14px); clip-path: inset(0 0 0 100%); }
+    92% { filter: blur(0); clip-path: inset(0 0 0 0); }
+    100% { opacity: 1; transform: none; }
+  }
+  @keyframes e3 {
+    0% { opacity: 0; transform: translateY(44px) scale(0.7); filter: blur(12px); }
+    92% { filter: blur(0); }
+    100% { opacity: 1; transform: none; }
+  }
+  @keyframes e4 {
+    0% { opacity: 0; transform: translate(6vw, 30px) scale(0.88) rotate(2deg); filter: blur(15px); clip-path: circle(0% at 90% 40%); }
+    92% { filter: blur(0); clip-path: circle(170% at 90% 40%); }
+    100% { opacity: 1; transform: none; }
+  }
+  @keyframes e5 {
+    0% { opacity: 0; transform: translate(-8vw, -18px) scale(1.14); filter: blur(13px); clip-path: inset(0 100% 0 0); }
+    92% { filter: blur(0); clip-path: inset(0 0 0 0); }
+    100% { opacity: 1; transform: none; }
+  }
+  @keyframes e6 {
+    0% { opacity: 0; transform: translateY(-40px) scale(0.76); filter: blur(11px); }
+    92% { filter: blur(0); }
+    100% { opacity: 1; transform: none; }
+  }
+  @keyframes e7 {
+    0% { opacity: 0; transform: translate(-10vw, 38px) scale(0.86) rotate(-2deg); filter: blur(15px); clip-path: inset(100% 0 0 0); }
+    92% { filter: blur(0); clip-path: inset(0 0 0 0); }
+    100% { opacity: 1; transform: none; }
+  }
+  @keyframes e8 {
+    0% { opacity: 0; transform: translate(11vw, 22px) scale(1.18); filter: blur(14px); }
+    92% { filter: blur(0); }
+    100% { opacity: 1; transform: none; }
+  }
+  @keyframes e9 {
+    0% { opacity: 0; transform: translate(-5vw, -26px) scale(0.72); filter: blur(10px); }
+    92% { filter: blur(0); }
+    100% { opacity: 1; transform: none; }
+  }
+  @keyframes e10 {
+    0% { opacity: 0; transform: translateY(52px) scale(0.8); filter: blur(12px); clip-path: inset(0 0 100% 0); }
+    92% { filter: blur(0); clip-path: inset(0 0 0 0); }
+    100% { opacity: 1; transform: none; }
+  }
+
+  .foot {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    padding: 0 var(--gutter) 26px var(--edge);
+  }
+
+  .hint {
+    margin: 0;
+    opacity: 0.45;
+  }
+
+  /* Phones: the 12-column wall has nowhere to go, so it becomes a plain
+     scrolling column. Everything else — colours, bands, sweep — is unchanged. */
+  @media (max-width: 720px) {
+    .head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      padding-top: 22px;
+    }
+    .hud {
+      font-size: 9px;
+      letter-spacing: 0.12em;
+    }
+    .stage {
+      display: block;
+      overflow: visible;
+      padding-top: 4vh;
+      padding-bottom: 4vh;
+    }
+    .wall {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      transform: none !important;
+    }
+    .slot {
+      grid-column: auto !important;
+    }
+    .slot .q {
+      font-size: 21px !important;
+      line-height: 1.2 !important;
+      letter-spacing: -0.02em !important;
+      opacity: 1 !important;
+    }
+    .slot:nth-child(1) .q {
+      font-size: 30px !important;
+      letter-spacing: -0.03em !important;
+    }
+    .foot {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+      padding-bottom: 30px;
+    }
+  }
+</style>
+
+<script>
+  import { initWall } from '../scripts/wall';
+  initWall();
+</script>

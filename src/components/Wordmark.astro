@@ -1,0 +1,15 @@
+---
+import { url } from '../lib/url';
+
+interface Props {
+  /** The home page renders the wordmark as plain type; every other page links it. */
+  link?: boolean;
+}
+const { link = true } = Astro.props;
+const Tag = link ? 'a' : 'div';
+---
+
+<Tag class="wordmark" {...link ? { href: url(), 'aria-label': 'Magnitude — home' } : {}}>
+  <span>M</span><span>A</span><span>G</span><span>N</span><span>I</span><span>T</span><span>U</span
+  ><span>D</span><span>E</span>
+</Tag>

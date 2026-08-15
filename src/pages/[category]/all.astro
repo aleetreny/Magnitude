@@ -1,0 +1,244 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Shell from '../../layouts/Shell.astro';
+import Wordmark from '../../components/Wordmark.astro';
+import { CATEGORIES, getCategory } from '../../data/categories';
+import { archiveData } from '../../lib/questions';
+import { url } from '../../lib/url';
+
+export const getStaticPaths = (() =>
+  CATEGORIES.map((c) => ({ params: { category: c.id } }))) satisfies GetStaticPaths;
+
+const { category } = Astro.params;
+const c = getCategory(category!);
+const data = await archiveData();
+const current = data.find((d) => d.id === c.id)!;
+---
+
+<Shell
+  variant="archive"
+  category={c.id}
+  title={`${c.name} — all questions — MAGNITUDE`}
+  description={`Every question MAGNITUDE is asking about ${c.name.toLowerCase()}.`}
+>
+  <header class="head">
+    <Wordmark />
+    <a class="home mono" href={url()}>← Home</a>
+  </header>
+
+  <div class="title">
+    <h1 data-title class="run">{current.name}</h1>
+    <p class="count mono" data-count>{current.rows.length} questions<br />full archive</p>
+  </div>
+
+  <ol class="list" data-list>
+    {
+      current.rows.map((row, n) => (
+        <li>
+          <a class="row run" href={row.href} style={`--n:${n}`}>
+            <span class="num mono">{String(n + 1).padStart(2, '0')}</span>
+            <span class="q">{row.question}</span>
+            <span class="src mono">{row.meta}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+
+  <footer class="foot">
+    <a class="pill" data-wall-link href={current.href}>
+      <span>Back to the wall</span><span class="arrow">↖</span>
+    </a>
+    <p class="hint mono">Switch category on the colour bands</p>
+  </footer>
+
+  <script is:inline type="application/json" data-archive-data set:html={JSON.stringify(data)} />
+</Shell>
+
+<style>
+  .head {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    padding: 30px 0 0;
+  }
+
+  .home {
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    opacity: 0.6;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 3px;
+  }
+
+  .title {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 40px;
+    padding: 9vh 0 5vh;
+  }
+
+  h1 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: min(7vw, 96px);
+    line-height: 0.94;
+    letter-spacing: -0.04em;
+  }
+
+  h1.run {
+    animation: title 900ms var(--ease) backwards;
+  }
+
+  @keyframes title {
+    0% {
+      opacity: 0;
+      transform: translateX(-40px) scale(0.9);
+      filter: blur(12px);
+    }
+    92% {
+      filter: blur(0);
+    }
+    100% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .count {
+    margin: 0 0 12px;
+    font-size: 11px;
+    line-height: 1.7;
+    text-align: right;
+    opacity: 0.55;
+  }
+
+  .list {
+    position: relative;
+    z-index: 3;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid currentColor;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 58px 1fr 150px;
+    column-gap: 26px;
+    align-items: baseline;
+    padding: 22px 0;
+    border-bottom: 1px solid currentColor;
+  }
+
+  .row.run {
+    animation: row 700ms var(--ease) calc(120ms + var(--n) * 45ms) backwards;
+  }
+
+  @keyframes row {
+    0% {
+      opacity: 0;
+      transform: translateY(26px);
+      filter: blur(9px);
+      clip-path: inset(0 0 100% 0);
+    }
+    92% {
+      filter: blur(0);
+      clip-path: inset(0 0 0 0);
+    }
+    100% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .num {
+    font-size: 11px;
+    line-height: 1.4;
+    letter-spacing: normal;
+    opacity: 0.5;
+  }
+
+  .q {
+    display: inline-block;
+    font-size: min(2.5vw, 34px);
+    line-height: 1.12;
+    letter-spacing: -0.026em;
+    text-wrap: pretty;
+    transform-origin: left center;
+    transition: transform 260ms var(--ease);
+  }
+
+  .row[href]:hover .q,
+  .row[href]:focus-visible .q {
+    transform: scale(1.035);
+  }
+
+  .src {
+    font-size: 10.5px;
+    line-height: 1.5;
+    letter-spacing: 0.08em;
+    text-align: right;
+    opacity: 0.45;
+  }
+
+  .foot {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    padding: 26px 0 34px;
+  }
+
+  .hint {
+    margin: 0;
+    opacity: 0.45;
+  }
+
+  @media (max-width: 720px) {
+    .title {
+      padding: 6vh 0 4vh;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    h1 {
+      font-size: 42px;
+    }
+    .count {
+      text-align: left;
+      margin: 0;
+    }
+    .row {
+      grid-template-columns: 34px 1fr;
+      row-gap: 6px;
+      padding: 18px 0;
+    }
+    .q {
+      font-size: 19px;
+    }
+    .src {
+      grid-column: 2;
+      text-align: left;
+    }
+    .foot {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+    }
+  }
+</style>
+
+<script>
+  import { initArchive } from '../../scripts/archive';
+  initArchive();
+</script>

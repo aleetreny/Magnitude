@@ -1,0 +1,320 @@
+---
+import { Font } from 'astro:assets';
+import Wordmark from '../components/Wordmark.astro';
+import { getCategory } from '../data/categories';
+import { mix } from '../lib/color';
+import { url } from '../lib/url';
+import '../styles/magnitude.css';
+
+interface Props {
+  question: string;
+  answer: string;
+  category: string;
+  sources: string[];
+  charts: number;
+  readingMinutes: number;
+  date: Date;
+  /** Two-digit-ish issue number shown in the breadcrumb. */
+  number: string;
+}
+const { question, answer, category, sources, charts, readingMinutes, date, number } = Astro.props;
+const c = getCategory(category);
+const paper = '#fdfdfc';
+
+// The whole point of the article palette: the page stays white and black so the
+// charts own the colour. The category survives as the 4px rule at the very top,
+// the kicker, the figure numbers, the link underlines — type and hairlines only.
+const wash = mix(c.bg, paper, 0.3);
+
+const meta = [
+  charts === 1 ? '1 chart' : `${charts} charts`,
+  `${readingMinutes} min`,
+  `Source: ${sources[0]}`,
+].join(' · ');
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const stamp = date.toISOString().slice(0, 10);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{question} — MAGNITUDE</title>
+    <meta name="description" content={answer} />
+    <link rel="canonical" href={canonical.href} />
+    <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
+    <meta name="theme-color" content={paper} />
+    <meta property="og:title" content={question} />
+    <meta property="og:description" content={answer} />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content={canonical.href} />
+    <Font cssVariable="--font-mono" preload />
+  </head>
+
+  <body
+    class="article"
+    style={`--accent:${c.ink};--accent-wash:${wash};--band:${c.band}`}
+  >
+    <div class="topbar" aria-hidden="true"></div>
+
+    <header class="head">
+      <Wordmark />
+      <nav class="breadcrumb mono" aria-label="Breadcrumb">
+        <a href={url(`${c.id}/all`)} class="cat">{c.name}</a>
+        <span class="sep">/</span>
+        <span>{number}</span>
+      </nav>
+    </header>
+
+    <article class="piece">
+      <div class="lede">
+        <h1>{question}</h1>
+        <p class="standfirst">{answer}</p>
+        <p class="meta mono">{meta}</p>
+      </div>
+
+      <div class="body">
+        <slot />
+      </div>
+    </article>
+
+    <footer class="foot">
+      <a class="pill" href={url(`${c.id}/all`)}>
+        <span class="arrow">←</span><span>All {c.name} questions</span>
+      </a>
+      <p class="licence mono">
+        <time datetime={stamp}>{stamp}</time> · Text and charts CC BY 4.0 · Data belongs to {
+          sources.join(', ')
+        }
+      </p>
+    </footer>
+  </body>
+</html>
+
+<style>
+  :global(html) {
+    color-scheme: light;
+  }
+
+  .article {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--display);
+    /* The rail holds figure numbers and margin notes on wide screens. */
+    --rail: 0px;
+    --measure: 680px;
+  }
+
+  @media (min-width: 1200px) {
+    .article {
+      --rail: 150px;
+    }
+  }
+
+  /* The one full-bleed thing on the page. */
+  .topbar {
+    position: fixed;
+    inset: 0 0 auto;
+    height: 4px;
+    background: var(--band);
+    z-index: 5;
+  }
+
+  /* The measure is centred; the rail hangs into the left margin, which is
+     always wider than it from 1200px up. */
+  .head,
+  .piece,
+  .foot {
+    width: min(100% - 48px, var(--measure));
+    margin-inline: auto;
+  }
+
+  .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    padding-top: 34px;
+    padding-bottom: 8vh;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-weight: 500;
+    color: var(--ink-soft);
+  }
+
+  .breadcrumb .cat {
+    color: var(--accent);
+    border-bottom: 1px solid transparent;
+    transition: border-color 260ms ease;
+  }
+  .breadcrumb .cat:hover,
+  .breadcrumb .cat:focus-visible {
+    border-bottom-color: currentColor;
+  }
+  .breadcrumb .sep {
+    opacity: 0.4;
+  }
+
+  h1 {
+    margin: 0;
+    font-weight: 400;
+    font-size: min(5.4vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.032em;
+    text-wrap: pretty;
+  }
+
+  .standfirst {
+    margin: 26px 0 0;
+    font-size: 21px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    text-wrap: pretty;
+  }
+
+  .meta {
+    margin: 30px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-soft);
+  }
+
+  .body {
+    padding-top: 6vh;
+    padding-bottom: 10vh;
+  }
+
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding-top: 26px;
+    padding-bottom: 40px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .licence {
+    margin: 0;
+    color: var(--ink-soft);
+    opacity: 0.85;
+    letter-spacing: 0.08em;
+  }
+
+  @media (max-width: 720px) {
+    .head {
+      padding-bottom: 5vh;
+    }
+    .standfirst {
+      font-size: 18px;
+    }
+    .foot {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+  }
+</style>
+
+<style is:global>
+  /* ---- The prose. Everything here is ink on paper; the accent shows up only
+     in link underlines, the figure numbers and the key-number rule. ---- */
+  .article .body {
+    font-size: 17.5px;
+    line-height: 1.62;
+  }
+
+  .article .body > p {
+    margin: 0 0 1.1em;
+    text-wrap: pretty;
+  }
+
+  .article .body > h2 {
+    margin: 2.4em 0 0.7em;
+    font-weight: 400;
+    font-size: 27px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .article .body > h3 {
+    margin: 2em 0 0.5em;
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .article .body a {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  .article .body a:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  .article .body strong {
+    font-weight: 500;
+  }
+
+  .article .body ul,
+  .article .body ol {
+    margin: 0 0 1.1em;
+    padding-left: 1.1em;
+  }
+
+  .article .body li {
+    margin-bottom: 0.35em;
+  }
+
+  .article .body > blockquote {
+    margin: 2em 0;
+    padding: 0 0 0 20px;
+    border-left: 1px solid var(--rule);
+    color: var(--ink-soft);
+  }
+
+  /* Tables: hairlines and a wash, no card, no radius. */
+  .article .body table {
+    width: 100%;
+    margin: 2em 0;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+  .article .body th {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: left;
+    color: var(--ink-soft);
+    padding: 8px 10px 8px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .article .body td {
+    padding: 9px 10px 9px 0;
+    border-bottom: 1px solid var(--rule);
+    font-variant-numeric: tabular-nums;
+  }
+  .article .body tbody tr:nth-child(even) {
+    background: var(--accent-wash);
+  }
+
+  .article .body code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+  }
+</style>

@@ -1,0 +1,21 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Shell from '../../layouts/Shell.astro';
+import Wall from '../../components/Wall.astro';
+import { CATEGORIES, getCategory } from '../../data/categories';
+
+export const getStaticPaths = (() =>
+  CATEGORIES.map((c) => ({ params: { category: c.id } }))) satisfies GetStaticPaths;
+
+const { category } = Astro.params;
+const c = getCategory(category!);
+---
+
+<Shell
+  variant="wall"
+  category={c.id}
+  title={`${c.name} — MAGNITUDE`}
+  description={`Questions about ${c.name.toLowerCase()}, answered with charts.`}
+>
+  <Wall active={c.id} />
+</Shell>

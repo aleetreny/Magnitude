@@ -1,0 +1,30 @@
+---
+// A note that sits in the left rail on wide screens and folds into the column
+// below 1200px, where there is no rail to put it in.
+---
+
+<aside class="note mono"><slot /></aside>
+
+<style>
+  .note {
+    margin: 1.6em 0;
+    padding-left: 14px;
+    border-left: 1px solid var(--rule);
+    font-size: 10.5px;
+    line-height: 1.7;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    color: var(--ink-soft);
+  }
+
+  @media (min-width: 1200px) {
+    .note {
+      float: left;
+      width: calc(var(--rail) - 34px);
+      margin: 0.45em 0 1em calc(-1 * var(--rail));
+      padding: 0;
+      border-left: 0;
+      text-align: right;
+    }
+  }
+</style>

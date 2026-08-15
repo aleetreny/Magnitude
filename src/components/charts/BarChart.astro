@@ -1,0 +1,118 @@
+---
+import { max as d3max } from 'd3-array';
+import { scaleLinear } from 'd3-scale';
+import { SERIES, formatValue, type FormatOptions } from '../../lib/chart';
+
+export interface Bar {
+  label: string;
+  value: number;
+}
+
+interface Props extends FormatOptions {
+  bars: Bar[];
+  /** Names what is plotted, so a single series needs no legend box. */
+  caption?: string;
+  /** Override the scale's top; otherwise it is the largest value, nice()'d. */
+  max?: number;
+}
+
+const { bars, caption, max, decimals = 0, prefix = '', suffix = '' } = Astro.props;
+
+// One series, one hue: bar length already encodes the value, so colouring each
+// bar differently would spend the identity channel on nothing.
+const x = scaleLinear()
+  .domain([0, max ?? d3max(bars, (d) => d.value) ?? 1])
+  .nice()
+  .range([0, 100]);
+
+const rows = bars.map((b) => ({
+  ...b,
+  width: x(b.value),
+  display: formatValue(b.value, { decimals, prefix, suffix }),
+}));
+---
+
+<div class="bars" style={`--series:${SERIES[0]}`}>
+  {caption && <p class="what">{caption}</p>}
+  <div class="rows">
+    {
+      rows.map((row) => (
+        <div class="row">
+          <span class="name">{row.label}</span>
+          <span class="track">
+            <span class="bar" style={`width:${row.width}%`} />
+          </span>
+          <span class="value mono">{row.display}</span>
+        </div>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .bars {
+    --name-col: 132px;
+    --value-col: 58px;
+    margin: 0;
+  }
+
+  .what {
+    margin: 0 0 18px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--ink-soft);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: var(--name-col) 1fr var(--value-col);
+    column-gap: 14px;
+    align-items: center;
+    padding: 5px 0;
+  }
+
+  .name {
+    font-size: 14px;
+    line-height: 1.25;
+    text-align: right;
+    color: var(--ink);
+  }
+
+  /* The baseline every bar grows from — the only axis this chart needs. */
+  .track {
+    position: relative;
+    display: block;
+    height: 20px;
+    border-left: 1px solid var(--rule);
+  }
+
+  .bar {
+    display: block;
+    height: 100%;
+    background: var(--series);
+    /* Square where it meets the baseline, 4px round at the data end. */
+    border-radius: 0 4px 4px 0;
+  }
+
+  .value {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    text-align: left;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 720px) {
+    .bars {
+      --name-col: 96px;
+      --value-col: 48px;
+    }
+    .name {
+      font-size: 12.5px;
+    }
+    .row {
+      column-gap: 10px;
+    }
+  }
+</style>

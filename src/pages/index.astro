@@ -1,0 +1,17 @@
+---
+import Shell from '../layouts/Shell.astro';
+import Wall from '../components/Wall.astro';
+import { CATEGORIES } from '../data/categories';
+
+// The home page opens on the first category; the bands take it from there.
+const first = CATEGORIES[0]!;
+---
+
+<Shell
+  variant="wall"
+  category={first.id}
+  title="MAGNITUDE"
+  description="A question-led data publication. Every post is a question answered with one or two charts."
+>
+  <Wall active={first.id} />
+</Shell>

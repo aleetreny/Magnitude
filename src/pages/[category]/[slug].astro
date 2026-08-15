@@ -1,0 +1,32 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+import Article from '../../layouts/Article.astro';
+import { publishedPosts } from '../../lib/questions';
+
+export const getStaticPaths = (async () => {
+  const posts = await publishedPosts();
+  // Oldest first, so an issue number never changes once it has been given out.
+  const byAge = [...posts].sort((a, b) => a.data.date.valueOf() - b.data.date.valueOf());
+  return byAge.map((post, i) => ({
+    params: { category: post.data.category, slug: post.id },
+    props: { post, number: String(i + 1).padStart(3, '0') },
+  }));
+}) satisfies GetStaticPaths;
+
+const { post, number } = Astro.props;
+const { Content } = await render(post);
+---
+
+<Article
+  question={post.data.question}
+  answer={post.data.answer}
+  category={post.data.category}
+  sources={post.data.sources}
+  charts={post.data.charts}
+  readingMinutes={post.data.readingMinutes}
+  date={post.data.date}
+  number={number}
+>
+  <Content />
+</Article>

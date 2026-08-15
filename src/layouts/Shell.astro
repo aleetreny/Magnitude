@@ -1,0 +1,147 @@
+---
+import { Font } from 'astro:assets';
+import Bands from '../components/Bands.astro';
+import { getCategory } from '../data/categories';
+import { url } from '../lib/url';
+import '../styles/magnitude.css';
+
+interface Props {
+  title: string;
+  description: string;
+  category: string;
+  /** 'wall' never scrolls; 'archive' does. */
+  variant: 'wall' | 'archive';
+}
+const { title, description, category, variant } = Astro.props;
+const c = getCategory(category);
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en" data-variant={variant}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical.href} />
+    <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
+    <meta name="theme-color" content={c.bg} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical.href} />
+    <Font cssVariable="--font-mono" preload />
+  </head>
+
+  <body>
+    <div class="shell" data-shell style={`background-color:${c.bg};color:${c.ink}`}>
+      {/* The colour sweep: a disc of the incoming colour, then a ring of its ink. */}
+      <div class="sweep" data-sweep aria-hidden="true"></div>
+      <div class="sweep-ring" data-sweep-ring aria-hidden="true"></div>
+
+      <slot />
+
+      <Bands active={category} target={variant === 'archive' ? 'archive' : 'wall'} />
+    </div>
+  </body>
+</html>
+
+<style>
+  html[data-variant='wall'],
+  html[data-variant='wall'] body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .shell {
+    font-family: var(--display);
+    transition:
+      background-color var(--sweep) var(--ease),
+      color var(--sweep) var(--ease);
+  }
+
+  html[data-variant='wall'] .shell {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+  }
+
+  html[data-variant='wall'] .shell:active {
+    cursor: grabbing;
+  }
+
+  html[data-variant='archive'] .shell {
+    min-height: 100vh;
+    padding: 0 var(--gutter) 0 var(--edge);
+  }
+
+  .sweep,
+  .sweep-ring {
+    position: fixed;
+    width: 230vmax;
+    height: 230vmax;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    left: 100%;
+    top: 50%;
+  }
+
+  .sweep-ring {
+    border: 2px solid transparent;
+  }
+
+  .sweep.run {
+    animation: sweep 1100ms var(--ease) backwards;
+  }
+  .sweep-ring.run {
+    animation: sweep-ring 1250ms var(--ease) 60ms backwards;
+  }
+
+  @keyframes sweep {
+    0% {
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 1;
+    }
+    62% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0;
+    }
+  }
+
+  @keyframes sweep-ring {
+    0% {
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0.55;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0;
+    }
+  }
+
+  /* Phones: the wall gives up its fixed stage and scrolls like a normal page. */
+  @media (max-width: 720px) {
+    html[data-variant='wall'],
+    html[data-variant='wall'] body {
+      height: auto;
+      overflow: visible;
+    }
+    html[data-variant='wall'] .shell {
+      position: static;
+      min-height: 100vh;
+      touch-action: auto;
+      user-select: auto;
+      cursor: auto;
+    }
+  }
+</style>

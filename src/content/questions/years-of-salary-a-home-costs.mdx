@@ -1,0 +1,80 @@
+---
+question: How many years of salary does a home cost today?
+answer: Between eight and fifteen, depending on which city you are standing in — and the gap between the cheapest and the dearest has widened faster than any single city has moved.
+category: housing
+sources:
+  - Deloitte Property Index
+  - Eurostat
+charts: 1
+readingMinutes: 4
+date: 2026-02-14
+draft: false
+---
+
+import Figure from '../../components/Figure.astro';
+import KeyNumber from '../../components/KeyNumber.astro';
+import MarginNote from '../../components/MarginNote.astro';
+import BarChart from '../../components/charts/BarChart.astro';
+
+The usual way to ask about house prices is to ask what they cost. That number is
+useless on its own: it means nothing without the salary standing next to it. So
+the question is better put in years. How long would a person on the local median
+wage have to work — spending nothing at all — to pay for a 70m² flat in the city
+they already live in?
+
+<Figure
+  n={1}
+  title="Years of gross median salary for a 70m² home"
+  source="Illustrative sample data · pattern after Deloitte Property Index, gross annual salary, 70m² new-build"
+>
+  <BarChart
+    caption="Each bar is the number of years of one median gross salary that a 70m² home costs in that city."
+    decimals={1}
+    suffix=" yrs"
+    bars={[
+      { label: 'Paris', value: 14.6 },
+      { label: 'Lisbon', value: 13.1 },
+      { label: 'Munich', value: 12.9 },
+      { label: 'Amsterdam', value: 11.2 },
+      { label: 'London', value: 10.8 },
+      { label: 'Berlin', value: 9.6 },
+      { label: 'Madrid', value: 8.4 },
+      { label: 'Rome', value: 7.9 },
+    ]}
+  />
+</Figure>
+
+<MarginNote>
+  70m² is the reference size used by most European property indices, which makes
+  cities comparable even where the typical home is bigger or smaller.
+</MarginNote>
+
+The spread is the finding. A flat in Paris costs nearly twice what the same flat
+costs in Rome, measured in the only currency that matters to the person buying
+it — their own working life. And the two cities at the top of the list get there
+by opposite routes: Paris is expensive, while Lisbon is not especially expensive
+so much as underpaid.
+
+<KeyNumber
+  value="14.6 years"
+  note="What a 70m² home in Paris costs in gross median salary — if you spent nothing else at all."
+/>
+
+That last point is the one the headline price always hides. Two cities can print
+the same price per square metre and sit years apart on this chart, because the
+denominator moved and nobody photographed it.
+
+### Method
+
+Each bar divides the median asking price of a 70m² new-build home by the gross
+median annual salary in the same city, both for the same year. Gross, not net:
+tax treatment varies enough across these countries that net figures would
+compare tax codes as much as housing markets. Nothing is discounted for
+mortgage interest, deposits or transaction costs, all of which push the real
+figure higher.
+
+The numbers above are **illustrative sample data shipped with this template** —
+they sit in the right range and behave like the real series, but they are not a
+citable measurement. Replace them with figures pulled straight from the
+[Deloitte Property Index](https://www.deloitte.com/ce/en/industries/real-estate/research/property-index.html)
+and [Eurostat](https://ec.europa.eu/eurostat) before publishing.

@@ -1,0 +1,100 @@
+---
+question: How many hours a year does a solar panel actually produce?
+answer: A panel is lit for about half the year, but it only produces at its rated power for the equivalent of 900 to 1,700 hours of it — a tenth to a fifth of the calendar.
+category: energy
+sources:
+  - PVGIS
+  - IEA
+charts: 1
+readingMinutes: 5
+date: 2026-04-03
+draft: false
+---
+
+import Figure from '../../components/Figure.astro';
+import KeyNumber from '../../components/KeyNumber.astro';
+import MarginNote from '../../components/MarginNote.astro';
+import LineChart from '../../components/charts/LineChart.astro';
+
+A panel sold as "1 kW" does not produce a kilowatt. It produces a kilowatt at
+noon in June with a clean surface and a clear sky, and something less than that
+every other moment of its life. The useful way to count is to ask how many hours
+of *full* output the year adds up to — take everything the panel made and divide
+it by its rated power.
+
+<Figure
+  n={1}
+  title="Monthly output of a 1 kWp rooftop array"
+  source="Illustrative sample data · pattern after PVGIS, south-facing, 35° tilt, kWh per kWp installed"
+>
+  <LineChart
+    caption="Monthly generation for the same 1 kWp array, in two European cities."
+    height={300}
+    suffix=" kWh"
+    xLabel="Month"
+    yDomain={[0, 200]}
+    series={[
+      {
+        name: 'Seville',
+        points: [
+          { x: 1, y: 85 }, { x: 2, y: 100 }, { x: 3, y: 140 }, { x: 4, y: 155 },
+          { x: 5, y: 175 }, { x: 6, y: 185 }, { x: 7, y: 195 }, { x: 8, y: 180 },
+          { x: 9, y: 150 }, { x: 10, y: 120 }, { x: 11, y: 90 }, { x: 12, y: 78 },
+        ],
+      },
+      {
+        name: 'Hamburg',
+        points: [
+          { x: 1, y: 20 }, { x: 2, y: 35 }, { x: 3, y: 70 }, { x: 4, y: 105 },
+          { x: 5, y: 125 }, { x: 6, y: 125 }, { x: 7, y: 122 }, { x: 8, y: 105 },
+          { x: 9, y: 78 }, { x: 10, y: 48 }, { x: 11, y: 22 }, { x: 12, y: 14 },
+        ],
+      },
+    ]}
+    xTicks={[
+      { value: 1, label: 'Jan' }, { value: 2, label: 'Feb' }, { value: 3, label: 'Mar' },
+      { value: 4, label: 'Apr' }, { value: 5, label: 'May' }, { value: 6, label: 'Jun' },
+      { value: 7, label: 'Jul' }, { value: 8, label: 'Aug' }, { value: 9, label: 'Sep' },
+      { value: 10, label: 'Oct' }, { value: 11, label: 'Nov' }, { value: 12, label: 'Dec' },
+    ]}
+    yTicks={[
+      { value: 0, label: '0' }, { value: 50, label: '50' },
+      { value: 100, label: '100' }, { value: 150, label: '150' },
+      { value: 200, label: '200' },
+    ]}
+  />
+</Figure>
+
+Seville's array adds up to about 1,650 kWh over the year; Hamburg's to about
+870. Both panels are identical. All that separates them is latitude, cloud and
+the length of a winter day.
+
+<KeyNumber
+  value="1,650 h"
+  note="Equivalent full-load hours for a south-facing kWp in Seville — 19% of the 8,760 hours in a year. In Hamburg it is closer to 10%."
+/>
+
+<MarginNote>
+  Equivalent full-load hours = annual kWh ÷ rated kW. It is the same quantity as
+  the capacity factor, expressed in hours instead of a percentage.
+</MarginNote>
+
+The seasonal shape matters more than the total. Seville's worst month still
+beats Hamburg's best, and Hamburg's December is barely a rounding error —
+fourteen kilowatt-hours across the whole month, roughly one hot bath a week.
+Sizing a system on the annual figure alone quietly assumes you can borrow
+July's sunshine in December, which is precisely the thing a rooftop cannot do.
+
+### Method
+
+Both series are for a south-facing array at 35° tilt with standard system
+losses, expressed per kilowatt-peak installed so the two cities can be compared
+directly. Equivalent full-load hours divide the annual total by the rated
+power; because the ratings are 1 kWp here, kWh and hours come out numerically
+the same.
+
+The numbers above are **illustrative sample data shipped with this template**.
+They follow the real seasonal shape closely, but pull your own before
+publishing: the [PVGIS](https://joint-research-centre.ec.europa.eu/pvgis-online-tool_en)
+tool will give you the monthly series for any coordinates in Europe, free and
+without an account.

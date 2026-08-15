@@ -1,0 +1,52 @@
+---
+interface Props {
+  /** Figure number, 1-based. */
+  n: number;
+  /** What the chart shows — the second half of the FIG. line. */
+  title: string;
+  /** Dataset id or source line, set below the chart. */
+  source: string;
+}
+const { n, title, source } = Astro.props;
+---
+
+<figure class="fig">
+  <p class="cap mono">Fig. {n} · {title}</p>
+  <div class="plot"><slot /></div>
+  <figcaption class="src mono">{source}</figcaption>
+</figure>
+
+<style>
+  .fig {
+    margin: 3.4em 0;
+  }
+
+  /* Wide screens: the figure bleeds left into the margin rail. */
+  @media (min-width: 1200px) {
+    .fig {
+      margin-left: -80px;
+    }
+  }
+
+  .cap {
+    margin: 0 0 22px;
+    padding-top: 12px;
+    border-top: 1px solid var(--rule);
+    /* The category colour, in type and a hairline. Nowhere else. */
+    color: var(--accent);
+    font-weight: 500;
+    letter-spacing: 0.14em;
+  }
+
+  .plot {
+    /* Wide content, narrow viewport: scroll the figure, never the page. */
+    overflow-x: auto;
+  }
+
+  .src {
+    margin: 20px 0 0;
+    color: var(--ink-soft);
+    letter-spacing: 0.1em;
+    line-height: 1.5;
+  }
+</style>

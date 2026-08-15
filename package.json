@@ -1,0 +1,28 @@
+{
+  "name": "magnitude",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A question-led data publication. Every post is a question answered with one or two charts.",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.5",
+    "@astrojs/mdx": "^7.0.5",
+    "astro": "^7.2.1",
+    "d3-array": "^3.2.4",
+    "d3-scale": "^4.0.2",
+    "d3-shape": "^3.2.0",
+    "typescript": "^5.9.2"
+  },
+  "devDependencies": {
+    "@types/d3-array": "^3.2.1",
+    "@types/d3-scale": "^4.0.9",
+    "@types/d3-shape": "^3.1.7"
+  }
+}

@@ -301,14 +301,24 @@ the repository, not in this code:
 1. **Settings → Pages → Build and deployment → Source: GitHub Actions**
    (not "Deploy from a branch").
 2. **Settings → General → Default branch: `main`.**
+3. **Settings → Environments → `github-pages` → Deployment branches and tags:
+   `main` must be listed.**
 
-The second one is the trap. When Pages is set to the Actions source, GitHub
-creates a `github-pages` environment whose deployment policy admits **only the
-default branch**. Deploy from anything else and the `deploy` job fails in about
-a second with no runner assigned and no logs at all — while the `build` job goes
-green and uploads its artifact, which makes it look like a Pages outage rather
-than a settings problem. If you ever see that signature, check which branch is
-the default before looking anywhere else.
+The third one is the trap, and the second does not fix it. When Pages is set to
+the Actions source, GitHub creates a `github-pages` environment and writes a
+deployment branch rule naming whatever branch was default *at that moment*. The
+rule holds a branch name, not the idea of "the default branch", so renaming or
+switching the default afterwards leaves it pointing at the old one.
+
+The failure signature: `build` goes green and uploads its artifact, then
+`deploy` fails in about a second with `runner_id: 0`, no runner name and no
+steps at all. No logs, because the job never started. It reads like a Pages
+outage rather than a permissions rule.
+
+This was verified rather than guessed — the same commit was pushed to `main`
+(default, `deploy` failed) and dispatched on the old branch (not default,
+`deploy` succeeded) a minute apart. If you see that signature, open the
+environment's branch rule before looking anywhere else.
 
 The site is served from a subpath, so `astro.config.mjs` sets
 `site: 'https://aleetreny.github.io'` and `base: '/Magnitude'`. Always build

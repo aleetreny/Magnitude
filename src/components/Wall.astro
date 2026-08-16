@@ -270,9 +270,12 @@ const hud = (c: (typeof data)[number]) =>
       letter-spacing: 0.12em;
     }
     .stage {
-      /* Still the fit-to-height stage; only the grid inside it changes. */
+      /* Still the fit-to-height stage; only the grid inside it changes. The
+         bottom gap is set in pixels and larger than the 16px between questions,
+         so the last one reads as clear of the band bar rather than as one more
+         line in the column. */
       padding-top: 2.4vh;
-      padding-bottom: 2.4vh;
+      padding-bottom: 28px;
     }
     .wall {
       display: flex;

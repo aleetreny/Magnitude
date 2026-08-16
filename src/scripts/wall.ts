@@ -88,12 +88,19 @@ export function initWall() {
     // between two `hidden` writes flushes layout once per slot.
     for (const slot of slots) slot.hidden = slot.dataset.filled !== '1';
 
+    // `clientHeight` counts the stage's own padding, so measuring against it
+    // hands the wall ~40px it does not have and lets the last question sit in
+    // the gap that is meant to separate it from the band bar.
+    const pad = getComputedStyle(stage);
+    const inner =
+      stage.clientHeight - parseFloat(pad.paddingTop || '0') - parseFloat(pad.paddingBottom || '0');
+
     if (narrow()) {
       wall.style.transform = '';
       // A column of independent flex items: hiding one cannot change another's
       // height, so a single measuring pass is enough for all of them.
       const visible = slots.filter((s) => !s.hidden);
-      const avail = stage.clientHeight;
+      const avail = inner;
       const gap = parseFloat(getComputedStyle(wall).rowGap || '0') || 0;
       const heights = visible.map((s) => s.offsetHeight);
       let used = 0;
@@ -106,7 +113,7 @@ export function initWall() {
     }
 
     wall.style.transform = 'none';
-    const avail = stage.clientHeight - 2;
+    const avail = inner - 2;
     const need = wall.scrollHeight;
     wall.style.transform = need > avail ? `scale(${Math.max(0.62, avail / need)})` : 'scale(1)';
   }

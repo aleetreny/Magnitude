@@ -257,8 +257,38 @@ the bands.
 - **The active band's label morphs** by animating `font-size` and
   `letter-spacing`. There is no second element cross-fading.
 - **`prefers-reduced-motion` keeps the colour change and drops everything else.**
-- On phones the wall becomes a scrolling column and the bands become slivers.
-  Their widths and `--gutter` in `magnitude.css` have to move together.
+- On phones the wall still never scrolls: it shows as many questions as fit and
+  hides the rest, because shrinking 21px type is worse than showing fewer. The
+  bands turn ninety degrees into a bottom tab bar, with the category name on the
+  active tab. Their heights and `--band-bar` in `magnitude.css` have to move
+  together, and the shell reserves `--band-bar` so nothing can pass under it.
+
+### Three things that were measured, and must not come back
+
+A category change animates ten entrances, seven bands and a full-screen sweep at
+once. Three habits each cost it most of its frame budget, and all three look
+harmless in the source:
+
+- **Never transition `color` on `.shell`.** It is inherited, so every frame of
+  the fade re-resolves the computed style of the whole document — 589ms of style
+  recalculation per switch, measured. Only the background cross-fades. Ink fades
+  on the wordmark and the pill, which are the only things still visible while
+  the sweep crosses.
+- **Never animate `clip-path`.** It was the entire remaining cost: 25 dropped
+  frames out of 90 with the masks on, 14 with the mask left on the headline
+  alone, 2 with none. The blur next to it measured free, which is why the blur
+  stayed and the wipes did not.
+- **Replay entrances in one batch.** `classList.remove` → one `offsetWidth` →
+  `classList.add`, for the whole set. A forced reflow per element is thirteen
+  synchronous layouts on a switch.
+
+Same reasoning behind the smaller ones: the sweep disc is a flat fill rastered
+at `20vmax` and scaled 11.5×, the bands lighten with an opacity overlay rather
+than a transitioned inset shadow, and the non-passive `wheel` listener is not
+registered on phones at all. None of this is visible by reading the CSS: it came
+out of sampling `requestAnimationFrame` deltas during a switch under 6× CPU
+throttling, then removing one ingredient at a time. Do that again before
+trusting a guess about which of these is expensive.
 
 ---
 

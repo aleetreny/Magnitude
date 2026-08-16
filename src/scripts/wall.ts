@@ -31,6 +31,8 @@ interface WallCategory {
 const LOCK = 900;
 const WHEEL_THRESHOLD = 12;
 const DRAG_THRESHOLD = 55;
+/** A phone swipe has to travel further than a stray thumb on a scroll. */
+const SWIPE_THRESHOLD = 60;
 
 const narrow = () => window.matchMedia('(max-width: 720px)').matches;
 
@@ -58,6 +60,7 @@ export function initWall() {
   const stage = document.querySelector<HTMLElement>('[data-stage]');
   const wall = document.querySelector<HTMLElement>('[data-wall]');
   const hud = document.querySelector<HTMLElement>('[data-hud]');
+  const catName = document.querySelector<HTMLElement>('[data-cat-name]');
   const archive = document.querySelector<HTMLAnchorElement>('[data-archive]');
   const sweep = document.querySelector<HTMLElement>('[data-sweep]');
   const ring = document.querySelector<HTMLElement>('[data-sweep-ring]');
@@ -126,6 +129,7 @@ export function initWall() {
       hud.textContent = `${String(cat.index + 1).padStart(2, '0')} / ${String(cats!.length).padStart(2, '0')} · ${cat.name} · ${cat.total} questions`;
       restart(hud);
     }
+    if (catName) catName.textContent = cat.name;
     if (archive) archive.href = cat.archiveHref;
 
     document.title = `${cat.name} — MAGNITUDE`;
@@ -172,23 +176,37 @@ export function initWall() {
     if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') go(current - 1);
   });
 
-  let dragFrom: number | null = null;
+  let fromX: number | null = null;
+  let fromY: number | null = null;
   let dragged = false;
   document.addEventListener('pointerdown', (e) => {
-    if (narrow() || (e.target as Element | null)?.closest('a')) return;
-    dragFrom = e.clientY;
+    // The bands handle their own taps; links keep working as links.
+    if ((e.target as Element | null)?.closest('a')) return;
+    fromX = e.clientX;
+    fromY = e.clientY;
     dragged = false;
   });
   document.addEventListener('pointermove', (e) => {
-    if (dragFrom === null || dragged) return;
-    const d = dragFrom - e.clientY;
-    if (Math.abs(d) > DRAG_THRESHOLD) {
+    if (fromX === null || fromY === null || dragged) return;
+    const dx = fromX - e.clientX;
+    const dy = fromY - e.clientY;
+    if (narrow()) {
+      // Only a decisively sideways move counts, or scrolling the wall would
+      // change category every time a thumb wandered.
+      if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        dragged = true;
+        go(current + (dx > 0 ? 1 : -1));
+      }
+      return;
+    }
+    if (Math.abs(dy) > DRAG_THRESHOLD) {
       dragged = true;
-      go(current + (d > 0 ? 1 : -1));
+      go(current + (dy > 0 ? 1 : -1));
     }
   });
   const endDrag = () => {
-    dragFrom = null;
+    fromX = null;
+    fromY = null;
   };
   document.addEventListener('pointerup', endDrag);
   document.addEventListener('pointercancel', endDrag);

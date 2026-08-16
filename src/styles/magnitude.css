@@ -28,15 +28,19 @@
   /* The fixed band stack on the right: 124px active + 6 × 26px inactive. */
   --gutter: 306px;
   --edge: 46px;
+  /* Height of the bottom band bar. Zero anywhere it is not along the bottom. */
+  --band-bar: 0px;
 }
 
-/* Phones: the bands shrink to slivers (38px active + 6 × 8px), so the gutter
-   that clears them shrinks with them. Both are set here, together, because
-   they have to stay in step — content sliding under the bands is the failure. */
+/* Phones: the bands leave the right edge for the bottom one, so the side gutter
+   is just the page margin and the wall gets the full width back. What has to
+   stay in step now is the bar's height and the room reserved beneath the
+   content — anything sliding under the bar is the failure. */
 @media (max-width: 720px) {
   :root {
-    --gutter: 100px;
+    --gutter: 22px;
     --edge: 22px;
+    --band-bar: 78px;
   }
 }
 

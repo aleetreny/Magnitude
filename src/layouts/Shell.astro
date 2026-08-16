@@ -139,7 +139,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     html[data-variant='wall'] .shell {
       position: static;
       min-height: 100vh;
-      touch-action: auto;
+      /* Vertical scrolling stays with the browser; sideways is the switcher's. */
+      touch-action: pan-y;
       user-select: auto;
       cursor: auto;
     }

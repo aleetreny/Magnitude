@@ -95,28 +95,45 @@ const activeIndex = categoryIndex(active);
     outline-color: var(--band-ink);
   }
 
-  /* Phones: the inactive bands become colour slivers. Their names stay in the
-     accessibility tree — 9px of vertical type would be unreadable anyway, and
-     the labelled active band plus the HUD say where you are. Keep these widths
-     in step with --gutter in magnitude.css. */
+  /* Phones: the stack turns ninety degrees and sits along the bottom edge,
+     where a thumb actually reaches. Seven equal keys across the width give a
+     56×58px target each — the sliver version was 8px wide and unhittable. The
+     active one rises above the rest; the names live in the accessibility tree
+     and, full size, in the footer directly above the bar. */
   @media (max-width: 720px) {
+    .bands {
+      right: 0;
+      left: 0;
+      top: auto;
+      bottom: 0;
+      height: calc(var(--band-bar) + env(safe-area-inset-bottom, 0px));
+      align-items: flex-end;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      box-shadow: 0 -1px 0 rgba(22, 24, 26, 0.06);
+    }
+
     .band {
-      width: 8px;
+      flex: 1 1 0;
+      width: auto;
+      height: 58px;
+      transition:
+        height var(--sweep) var(--ease),
+        box-shadow 600ms ease;
     }
+
     .band[aria-current='page'] {
-      width: 38px;
+      width: auto;
+      height: var(--band-bar);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
     }
-    .band:not([aria-current='page']) .band-label {
+
+    .band-label {
       position: absolute;
       width: 1px;
       height: 1px;
       overflow: hidden;
       clip-path: inset(50%);
       white-space: nowrap;
-    }
-    .band[aria-current='page'] .band-label {
-      font-size: 15px;
-      letter-spacing: 0.04em;
     }
   }
 </style>

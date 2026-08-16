@@ -24,7 +24,7 @@ const hud = (c: (typeof data)[number]) =>
   <ol class="wall" data-wall>
     {
       slots.map((q, i) => (
-        <li class="slot run" data-slot={i} hidden={!q}>
+<li class="slot run" data-slot={i} data-filled={q ? '1' : '0'} hidden={!q}>
           <a class="q" href={q?.href}>
             {q?.question}
           </a>
@@ -35,9 +35,6 @@ const hud = (c: (typeof data)[number]) =>
 </div>
 
 <footer class="foot">
-  {/* On a phone the bands sit along the bottom edge as bare colour, so the
-      name of the category you are on belongs here, right above them. */}
-  <p class="here" data-cat-name aria-hidden="true">{current.name}</p>
   <a class="pill" data-archive href={current.archiveHref}>
     <span>See all</span><span class="arrow">↗</span>
   </a>
@@ -245,16 +242,6 @@ const hud = (c: (typeof data)[number]) =>
     display: none;
   }
 
-  /* The category name only appears where the bands stop carrying it. */
-  .here {
-    display: none;
-    margin: 0;
-    font-family: var(--display);
-    font-weight: 400;
-    font-size: 30px;
-    line-height: 1;
-    letter-spacing: -0.03em;
-  }
 
   /* Phones: the 12-column wall has nowhere to go, so it becomes a plain
      scrolling column. Everything else — colours, bands, sweep — is unchanged. */
@@ -270,15 +257,16 @@ const hud = (c: (typeof data)[number]) =>
       letter-spacing: 0.12em;
     }
     .stage {
-      display: block;
-      overflow: visible;
-      padding-top: 4vh;
-      padding-bottom: 4vh;
+      /* Still the fit-to-height stage; only the grid inside it changes. */
+      padding-top: 2.4vh;
+      padding-bottom: 2.4vh;
     }
     .wall {
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 16px;
+      /* Never scaled on a phone: shrinking 21px type is worse than showing
+         fewer questions, so the script hides what will not fit instead. */
       transform: none !important;
     }
     .slot {
@@ -295,21 +283,11 @@ const hud = (c: (typeof data)[number]) =>
       letter-spacing: -0.03em !important;
     }
     .foot {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      align-items: end;
-      gap: 10px 14px;
-      /* Clear of the band bar, whatever the phone's home indicator adds. */
-      padding-bottom: calc(var(--band-bar) + 18px + env(safe-area-inset-bottom, 0px));
-    }
-    .here {
-      display: block;
-    }
-    .foot .pill {
-      justify-self: end;
-    }
-    .hint {
-      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding-bottom: 16px;
     }
     .hint-wide {
       display: none;

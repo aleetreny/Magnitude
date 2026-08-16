@@ -232,13 +232,19 @@ const current = data.find((d) => d.id === c.id)!;
       text-align: left;
       margin: 0;
     }
+    /* The list is the whole page on a phone, so it gets room to breathe:
+       taller rows, a real gap under each question, and looser leading. */
     .row {
-      grid-template-columns: 34px 1fr;
-      row-gap: 6px;
-      padding: 18px 0;
+      grid-template-columns: 30px 1fr;
+      row-gap: 10px;
+      padding: 26px 0;
     }
     .q {
-      font-size: 19px;
+      font-size: 20px;
+      line-height: 1.24;
+    }
+    .num {
+      font-size: 10px;
     }
     .src {
       grid-column: 2;

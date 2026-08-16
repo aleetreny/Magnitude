@@ -129,18 +129,14 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     }
   }
 
-  /* Phones: the wall gives up its fixed stage and scrolls like a normal page. */
+  /* Phones keep the wall's central rule: it never scrolls. The shell reserves
+     the band bar's height, so no question can ever pass under it — the wall
+     simply shows as many questions as the screen has room for. */
   @media (max-width: 720px) {
-    html[data-variant='wall'],
-    html[data-variant='wall'] body {
-      height: auto;
-      overflow: visible;
-    }
     html[data-variant='wall'] .shell {
-      position: static;
-      min-height: 100vh;
-      /* Vertical scrolling stays with the browser; sideways is the switcher's. */
-      touch-action: pan-y;
+      padding-bottom: calc(var(--band-bar) + env(safe-area-inset-bottom, 0px));
+      /* Sideways belongs to the switcher; there is nothing to scroll. */
+      touch-action: none;
       user-select: auto;
       cursor: auto;
     }

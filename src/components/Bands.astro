@@ -96,10 +96,9 @@ const activeIndex = categoryIndex(active);
   }
 
   /* Phones: the stack turns ninety degrees and sits along the bottom edge,
-     where a thumb actually reaches. Seven equal keys across the width give a
-     56×58px target each — the sliver version was 8px wide and unhittable. The
-     active one rises above the rest; the names live in the accessibility tree
-     and, full size, in the footer directly above the bar. */
+     where a thumb reaches. The active tab widens to carry its own name and the
+     other six share what is left — the same morph as the desktop stack, turned
+     on its side. No rule above the bar: the colour is the edge. */
   @media (max-width: 720px) {
     .bands {
       right: 0;
@@ -109,31 +108,54 @@ const activeIndex = categoryIndex(active);
       height: calc(var(--band-bar) + env(safe-area-inset-bottom, 0px));
       align-items: flex-end;
       padding-bottom: env(safe-area-inset-bottom, 0px);
-      box-shadow: 0 -1px 0 rgba(22, 24, 26, 0.06);
     }
 
     .band {
       flex: 1 1 0;
       width: auto;
-      height: 58px;
+      height: 56px;
       transition:
+        flex-grow var(--sweep) var(--ease),
+        flex-basis var(--sweep) var(--ease),
         height var(--sweep) var(--ease),
         box-shadow 600ms ease;
     }
 
     .band[aria-current='page'] {
+      flex: 0 0 auto;
       width: auto;
+      min-width: 88px;
       height: var(--band-bar);
+      padding: 0 12px;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
     }
 
+    /* The name is the tab, so it lies along it rather than down it. */
     .band-label {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
+      writing-mode: horizontal-tb;
+      font-size: 0;
+      letter-spacing: 0;
+      transition:
+        font-size var(--sweep) var(--ease),
+        letter-spacing var(--sweep) var(--ease);
+    }
+
+    .band[aria-current='page'] .band-label {
+      font-size: 12px;
+      letter-spacing: 0.12em;
+    }
+  }
+
+  /* The smallest phones: every millimetre the active tab gives back is width
+     the other six need to stay hittable. */
+  @media (max-width: 360px) {
+    .band[aria-current='page'] {
+      min-width: 78px;
+      padding: 0 9px;
+    }
+    .band[aria-current='page'] .band-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
     }
   }
 </style>

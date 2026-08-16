@@ -60,7 +60,6 @@ export function initWall() {
   const stage = document.querySelector<HTMLElement>('[data-stage]');
   const wall = document.querySelector<HTMLElement>('[data-wall]');
   const hud = document.querySelector<HTMLElement>('[data-hud]');
-  const catName = document.querySelector<HTMLElement>('[data-cat-name]');
   const archive = document.querySelector<HTMLAnchorElement>('[data-archive]');
   const sweep = document.querySelector<HTMLElement>('[data-sweep]');
   const ring = document.querySelector<HTMLElement>('[data-sweep-ring]');
@@ -73,13 +72,26 @@ export function initWall() {
   let current = Number(nav.dataset.active ?? 0);
   let busy = false;
 
-  /** Scale the wall down until it fits the stage — it must never scroll. */
+  /** The wall never scrolls. On a wide screen it scales to fit; on a phone,
+   *  where shrinking 21px type would be worse than showing less, it drops the
+   *  questions that do not fit. Either way nothing runs past the stage. */
   function fit() {
     if (!stage || !wall) return;
     if (narrow()) {
       wall.style.transform = '';
+      for (const slot of slots) slot.hidden = slot.dataset.filled !== '1';
+      const avail = stage.clientHeight;
+      const gap = parseFloat(getComputedStyle(wall).rowGap || '0') || 0;
+      let used = 0;
+      for (const slot of slots) {
+        if (slot.hidden) continue;
+        const need = slot.offsetHeight + (used ? gap : 0);
+        if (used + need > avail) slot.hidden = true;
+        else used += need;
+      }
       return;
     }
+    for (const slot of slots) slot.hidden = slot.dataset.filled !== '1';
     wall.style.transform = 'none';
     const avail = stage.clientHeight - 2;
     const need = wall.scrollHeight;
@@ -116,6 +128,7 @@ export function initWall() {
 
     slots.forEach((slot, n) => {
       const q = cat.questions[n];
+      slot.dataset.filled = q ? '1' : '0';
       slot.hidden = !q;
       const link = slot.querySelector('a');
       if (!link) return;
@@ -129,7 +142,6 @@ export function initWall() {
       hud.textContent = `${String(cat.index + 1).padStart(2, '0')} / ${String(cats!.length).padStart(2, '0')} · ${cat.name} · ${cat.total} questions`;
       restart(hud);
     }
-    if (catName) catName.textContent = cat.name;
     if (archive) archive.href = cat.archiveHref;
 
     document.title = `${cat.name} — MAGNITUDE`;
@@ -180,8 +192,10 @@ export function initWall() {
   let fromY: number | null = null;
   let dragged = false;
   document.addEventListener('pointerdown', (e) => {
-    // The bands handle their own taps; links keep working as links.
-    if ((e.target as Element | null)?.closest('a')) return;
+    // The bands are their own control; everything else on the wall — questions
+    // included — is fair game for a swipe, or there would be almost nowhere on
+    // a phone left to start one.
+    if ((e.target as Element | null)?.closest('[data-bands]')) return;
     fromX = e.clientX;
     fromY = e.clientY;
     dragged = false;
@@ -210,6 +224,18 @@ export function initWall() {
   };
   document.addEventListener('pointerup', endDrag);
   document.addEventListener('pointercancel', endDrag);
+
+  // A swipe that started on a question must not also open it.
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (!dragged) return;
+      e.preventDefault();
+      e.stopPropagation();
+      dragged = false;
+    },
+    true,
+  );
 
   window.addEventListener('popstate', () => {
     const id = location.pathname.replace(/\/+$/, '').split('/').pop();

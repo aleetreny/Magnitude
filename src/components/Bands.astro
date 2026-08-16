@@ -43,6 +43,9 @@ const activeIndex = categoryIndex(active);
     z-index: 4;
     display: flex;
     align-items: stretch;
+    /* The active band's label grows its font-size for 950ms. Containment keeps
+       that relayout inside the bar instead of walking the whole page. */
+    contain: layout paint;
   }
 
   .band {
@@ -57,12 +60,23 @@ const activeIndex = categoryIndex(active);
     cursor: pointer;
     background: var(--band-bg);
     width: 26px;
-    /* Lighten with an inset shadow, never `filter` — a filter rasterises the
-       layer and blurs the 11px label. */
-    box-shadow: inset 0 0 0 100vh rgba(255, 255, 255, 0.22);
+    box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0);
     transition:
       width var(--sweep) var(--ease),
       box-shadow 600ms ease;
+  }
+
+  /* The inactive lightening. It was an inset shadow, which repaints the band on
+     every frame of the 600ms fade; as an overlay it is an opacity change, which
+     the compositor does on its own thread. Never `filter` either way — that
+     rasterises the layer and blurs the 11px label. */
+  .band::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    opacity: 0.22;
+    transition: opacity 600ms ease;
   }
 
   .band[aria-current='page'] {
@@ -70,7 +84,12 @@ const activeIndex = categoryIndex(active);
     box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.35);
   }
 
+  .band[aria-current='page']::before {
+    opacity: 0;
+  }
+
   .band-label {
+    position: relative;
     writing-mode: vertical-rl;
     white-space: nowrap;
     color: var(--band-ink);

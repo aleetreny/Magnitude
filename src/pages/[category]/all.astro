@@ -149,16 +149,17 @@ const current = data.find((d) => d.id === c.id)!;
     animation: row 700ms var(--ease) calc(120ms + var(--n) * 45ms) backwards;
   }
 
+  /* No animated `clip-path`: twenty masked rows re-rastering together is the
+     same cost the wall's entrances were paying, for a wipe nobody can see under
+     the blur and the rise. */
   @keyframes row {
     0% {
       opacity: 0;
       transform: translateY(26px);
       filter: blur(9px);
-      clip-path: inset(0 0 100% 0);
     }
     92% {
       filter: blur(0);
-      clip-path: inset(0 0 0 0);
     }
     100% {
       opacity: 1;

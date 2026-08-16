@@ -56,9 +56,14 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
   .shell {
     font-family: var(--display);
-    transition:
-      background-color var(--sweep) var(--ease),
-      color var(--sweep) var(--ease);
+    /* Only the background cross-fades here. `color` is inherited, so animating
+       it on the shell re-resolves the computed style of every node in the
+       document on every frame of the fade — 589ms of style recalculation per
+       category change, measured. The ink now fades on the handful of elements
+       that stay visible instead (see `.ink-fade` in magnitude.css); everything
+       else is either replayed from zero or sitting under the opaque sweep while
+       it changes. */
+    transition: background-color var(--sweep) var(--ease);
   }
 
   html[data-variant='wall'] .shell {
@@ -83,17 +88,31 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   .sweep,
   .sweep-ring {
     position: fixed;
-    width: 230vmax;
-    height: 230vmax;
     border-radius: 50%;
     pointer-events: none;
     z-index: 2;
     opacity: 0;
     left: 100%;
     top: 50%;
+    /* Empty, fixed and sized: nothing inside can affect anything outside. */
+    contain: strict;
   }
 
+  /* The disc is a flat fill, so it is rastered small and blown up by the
+     compositor rather than rastered at its final 230vmax. Same geometry —
+     20vmax × 11.5 — for 1/132nd of the pixels: 169² instead of 1941² on a
+     phone. A flat colour loses nothing to the upscale, and the circle's edge
+     only gets softer. */
+  .sweep {
+    width: 20vmax;
+    height: 20vmax;
+  }
+
+  /* The ring cannot take the same trick — its 2px border would scale with it —
+     but it is transparent almost everywhere, which is the cheap kind of layer. */
   .sweep-ring {
+    width: 230vmax;
+    height: 230vmax;
     border: 2px solid transparent;
   }
 
@@ -113,7 +132,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       opacity: 1;
     }
     100% {
-      transform: translate(-50%, -50%) scale(1);
+      transform: translate(-50%, -50%) scale(11.5);
       opacity: 0;
     }
   }

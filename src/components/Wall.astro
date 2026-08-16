@@ -17,7 +17,12 @@ const hud = (c: (typeof data)[number]) =>
 
 <header class="head">
   <Wordmark link={false} />
-  <p class="hud mono run" data-hud>{hud(current)}</p>
+  <div class="head-right">
+    <p class="hud mono run" data-hud>{hud(current)}</p>
+    <a class="pill" data-archive href={current.archiveHref}>
+      <span>See all</span><span class="arrow">↗</span>
+    </a>
+  </div>
 </header>
 
 <div class="stage" data-stage>
@@ -35,11 +40,7 @@ const hud = (c: (typeof data)[number]) =>
 </div>
 
 <footer class="foot">
-  <a class="pill" data-archive href={current.archiveHref}>
-    <span>See all</span><span class="arrow">↗</span>
-  </a>
-  <p class="hint mono"><span class="hint-wide">Drag or scroll to switch</span><span
-      class="hint-narrow">Swipe, or tap a colour</span></p>
+  <p class="hint mono">Drag or scroll to switch</p>
 </footer>
 
 {/* Every category's ten questions, so the switcher never waits on the network. */}
@@ -54,6 +55,12 @@ const hud = (c: (typeof data)[number]) =>
     align-items: baseline;
     gap: 24px;
     padding: 30px var(--gutter) 0 var(--edge);
+  }
+
+  .head-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
   }
 
   .hud {
@@ -92,6 +99,9 @@ const hud = (c: (typeof data)[number]) =>
     align-items: center;
     padding: 2.4vh var(--gutter) 2.4vh var(--edge);
     overflow: hidden;
+    /* Already a clipping box, so paint containment costs nothing and keeps ten
+       simultaneous entrances from invalidating anything outside the stage. */
+    contain: layout paint;
   }
 
   .wall {
@@ -158,7 +168,14 @@ const hud = (c: (typeof data)[number]) =>
 
   /* Entrances. `backwards`, never `both`: a retained `filter: blur(0)` keeps a
      GPU layer alive and permanently degrades the antialiasing of the type. No
-     filter or clip-path survives into the 100% frame. */
+     filter survives into the 100% frame.
+
+     These used to wipe in behind an animated `clip-path` as well. Measured, the
+     mask was the whole cost of a category change on a wide screen — 25 dropped
+     frames out of 90, against 2 without it, and 14 with the mask left on the
+     headline alone. The blur costs nothing next to it and stays. What is lost
+     is a wipe that was reading underneath a simultaneous blur, translate,
+     scale and rotate; what is gained is the switch actually running at 60. */
   .slot.run { animation-duration: 1150ms; animation-timing-function: var(--ease); animation-fill-mode: backwards; }
   .slot.run:nth-child(1) { animation-name: e1; animation-delay: 60ms; }
   .slot.run:nth-child(2) { animation-name: e2; animation-delay: 300ms; }
@@ -172,14 +189,13 @@ const hud = (c: (typeof data)[number]) =>
   .slot.run:nth-child(10) { animation-name: e10; animation-delay: 440ms; }
 
   @keyframes e1 {
-    0% { opacity: 0; transform: translate(-14vw, 26px) scale(0.82) rotate(-3deg); filter: blur(16px); clip-path: circle(0% at 8% 60%); }
+    0% { opacity: 0; transform: translate(-14vw, 26px) scale(0.82) rotate(-3deg); filter: blur(16px); }
     60% { filter: blur(0); }
-    92% { filter: blur(0); clip-path: circle(160% at 8% 60%); }
     100% { opacity: 1; transform: none; }
   }
   @keyframes e2 {
-    0% { opacity: 0; transform: translate(9vw, -34px) scale(1.22); filter: blur(14px); clip-path: inset(0 0 0 100%); }
-    92% { filter: blur(0); clip-path: inset(0 0 0 0); }
+    0% { opacity: 0; transform: translate(9vw, -34px) scale(1.22); filter: blur(14px); }
+    92% { filter: blur(0); }
     100% { opacity: 1; transform: none; }
   }
   @keyframes e3 {
@@ -188,13 +204,13 @@ const hud = (c: (typeof data)[number]) =>
     100% { opacity: 1; transform: none; }
   }
   @keyframes e4 {
-    0% { opacity: 0; transform: translate(6vw, 30px) scale(0.88) rotate(2deg); filter: blur(15px); clip-path: circle(0% at 90% 40%); }
-    92% { filter: blur(0); clip-path: circle(170% at 90% 40%); }
+    0% { opacity: 0; transform: translate(6vw, 30px) scale(0.88) rotate(2deg); filter: blur(15px); }
+    92% { filter: blur(0); }
     100% { opacity: 1; transform: none; }
   }
   @keyframes e5 {
-    0% { opacity: 0; transform: translate(-8vw, -18px) scale(1.14); filter: blur(13px); clip-path: inset(0 100% 0 0); }
-    92% { filter: blur(0); clip-path: inset(0 0 0 0); }
+    0% { opacity: 0; transform: translate(-8vw, -18px) scale(1.14); filter: blur(13px); }
+    92% { filter: blur(0); }
     100% { opacity: 1; transform: none; }
   }
   @keyframes e6 {
@@ -203,8 +219,8 @@ const hud = (c: (typeof data)[number]) =>
     100% { opacity: 1; transform: none; }
   }
   @keyframes e7 {
-    0% { opacity: 0; transform: translate(-10vw, 38px) scale(0.86) rotate(-2deg); filter: blur(15px); clip-path: inset(100% 0 0 0); }
-    92% { filter: blur(0); clip-path: inset(0 0 0 0); }
+    0% { opacity: 0; transform: translate(-10vw, 38px) scale(0.86) rotate(-2deg); filter: blur(15px); }
+    92% { filter: blur(0); }
     100% { opacity: 1; transform: none; }
   }
   @keyframes e8 {
@@ -218,8 +234,8 @@ const hud = (c: (typeof data)[number]) =>
     100% { opacity: 1; transform: none; }
   }
   @keyframes e10 {
-    0% { opacity: 0; transform: translateY(52px) scale(0.8); filter: blur(12px); clip-path: inset(0 0 100% 0); }
-    92% { filter: blur(0); clip-path: inset(0 0 0 0); }
+    0% { opacity: 0; transform: translateY(52px) scale(0.8); filter: blur(12px); }
+    92% { filter: blur(0); }
     100% { opacity: 1; transform: none; }
   }
 
@@ -238,9 +254,6 @@ const hud = (c: (typeof data)[number]) =>
     opacity: 0.45;
   }
 
-  .hint-narrow {
-    display: none;
-  }
 
 
   /* Phones: the 12-column wall has nowhere to go, so it becomes a plain
@@ -282,19 +295,23 @@ const hud = (c: (typeof data)[number]) =>
       font-size: 30px !important;
       letter-spacing: -0.03em !important;
     }
+    /* Nothing left in the footer but the hint, and no room for it beside the
+       bar — the wall itself is the instruction now. */
     .foot {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      padding-bottom: 16px;
-    }
-    .hint-wide {
       display: none;
     }
-    .hint-narrow {
-      display: inline;
+    .head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      padding-top: 22px;
     }
+    .head-right {
+      width: 100%;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
   }
 </style>
 

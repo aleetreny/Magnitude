@@ -11,6 +11,13 @@ export default defineConfig({
   integrations: [mdx()],
   build: { format: 'directory' },
   devToolbar: { enabled: false },
+  // Fetch the next page on touchstart/mousedown — the ~120ms between a thumb
+  // landing and the navigation committing is enough to have the HTML in cache.
+  // Not 'hover': it does nothing on a phone, and on the wall it would prefetch
+  // every question the mouse crossed while reading. Not 'viewport' either — the
+  // wall rewrites its hrefs when the category changes, and only 'tap' reads the
+  // href at the moment it is needed.
+  prefetch: { prefetchAll: true, defaultStrategy: 'tap' },
   // Self-hosted at build time: no request to Google on page load, no FOUT on
   // the mono metadata. Helvetica Neue is a system face and needs no download.
   fonts: [

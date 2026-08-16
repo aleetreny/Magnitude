@@ -34,13 +34,20 @@ const DRAG_THRESHOLD = 55;
 /** A phone swipe has to travel further than a stray thumb on a scroll. */
 const SWIPE_THRESHOLD = 60;
 
-const narrow = () => window.matchMedia('(max-width: 720px)').matches;
+/** Held, not re-queried: this is read on every pointermove, and building a
+ *  MediaQueryList per event is real work on a phone. */
+const PHONE = window.matchMedia('(max-width: 720px)');
+const narrow = () => PHONE.matches;
 
-/** Restart a CSS animation: drop the class, force reflow, put it back. */
-function restart(el: Element, cls = 'run') {
-  el.classList.remove(cls);
-  void (el as HTMLElement).offsetWidth;
-  el.classList.add(cls);
+/** Replay a set of CSS entrances. One forced reflow for the whole set, never
+ *  one per element — a category change replays thirteen of them at once, and
+ *  thirteen synchronous layouts is most of the jank on the switch. */
+function replay(els: (Element | null | undefined)[], cls = 'run') {
+  const live = els.filter(Boolean) as HTMLElement[];
+  if (!live.length) return;
+  for (const el of live) el.classList.remove(cls);
+  void live[0].offsetWidth;
+  for (const el of live) el.classList.add(cls);
 }
 
 function readJSON<T>(selector: string): T | null {
@@ -77,21 +84,27 @@ export function initWall() {
    *  questions that do not fit. Either way nothing runs past the stage. */
   function fit() {
     if (!stage || !wall) return;
+    // Write, then read, then write — never interleaved. Reading a height back
+    // between two `hidden` writes flushes layout once per slot.
+    for (const slot of slots) slot.hidden = slot.dataset.filled !== '1';
+
     if (narrow()) {
       wall.style.transform = '';
-      for (const slot of slots) slot.hidden = slot.dataset.filled !== '1';
+      // A column of independent flex items: hiding one cannot change another's
+      // height, so a single measuring pass is enough for all of them.
+      const visible = slots.filter((s) => !s.hidden);
       const avail = stage.clientHeight;
       const gap = parseFloat(getComputedStyle(wall).rowGap || '0') || 0;
+      const heights = visible.map((s) => s.offsetHeight);
       let used = 0;
-      for (const slot of slots) {
-        if (slot.hidden) continue;
-        const need = slot.offsetHeight + (used ? gap : 0);
+      visible.forEach((slot, n) => {
+        const need = heights[n] + (used ? gap : 0);
         if (used + need > avail) slot.hidden = true;
         else used += need;
-      }
+      });
       return;
     }
-    for (const slot of slots) slot.hidden = slot.dataset.filled !== '1';
+
     wall.style.transform = 'none';
     const avail = stage.clientHeight - 2;
     const need = wall.scrollHeight;
@@ -102,7 +115,10 @@ export function initWall() {
     const cat = cats![i];
     current = i;
 
+    // The one read of the frame. Everything after it is a write, so layout is
+    // flushed once — by `replay` — rather than after each of them.
     const rect = bands[i]?.getBoundingClientRect();
+    const swept = Boolean(sweep && ring && rect);
     if (sweep && ring && rect) {
       const x = `${rect.left + rect.width / 2}px`;
       const y = `${rect.top + rect.height / 2}px`;
@@ -112,8 +128,6 @@ export function initWall() {
       }
       sweep.style.background = cat.bg;
       ring.style.borderColor = cat.ink;
-      restart(sweep);
-      restart(ring);
     }
 
     shell!.style.backgroundColor = cat.bg;
@@ -136,13 +150,14 @@ export function initWall() {
       if (q?.href) link.setAttribute('href', q.href);
       else link.removeAttribute('href');
     });
-    for (const slot of slots) restart(slot);
 
     if (hud) {
       hud.textContent = `${String(cat.index + 1).padStart(2, '0')} / ${String(cats!.length).padStart(2, '0')} · ${cat.name} · ${cat.total} questions`;
-      restart(hud);
     }
     if (archive) archive.href = cat.archiveHref;
+
+    // Thirteen entrances, one reflow.
+    replay([...slots, hud, swept ? sweep : null, swept ? ring : null]);
 
     document.title = `${cat.name} — MAGNITUDE`;
     if (push && cat.href !== location.pathname) {
@@ -170,17 +185,21 @@ export function initWall() {
     go(Number(band.dataset.band));
   });
 
-  // Wheel, drag and arrows only where the wall is a fixed, non-scrolling stage.
-  document.addEventListener(
-    'wheel',
-    (e) => {
-      if (narrow()) return;
-      e.preventDefault();
-      if (busy || Math.abs(e.deltaY) + Math.abs(e.deltaX) < WHEEL_THRESHOLD) return;
-      go(current + (e.deltaY + e.deltaX > 0 ? 1 : -1));
-    },
-    { passive: false },
-  );
+  // Wheel is a pointer-device gesture, and the listener has to be non-passive
+  // to swallow the scroll. A non-passive wheel listener makes the compositor
+  // wait on the main thread for every touch-scroll too, so on a phone — where
+  // it would only ever return early — it is not registered at all.
+  const onWheel = (e: WheelEvent) => {
+    e.preventDefault();
+    if (busy || Math.abs(e.deltaY) + Math.abs(e.deltaX) < WHEEL_THRESHOLD) return;
+    go(current + (e.deltaY + e.deltaX > 0 ? 1 : -1));
+  };
+  const syncWheel = () => {
+    document.removeEventListener('wheel', onWheel, { capture: false });
+    if (!narrow()) document.addEventListener('wheel', onWheel, { passive: false });
+  };
+  syncWheel();
+  PHONE.addEventListener('change', syncWheel);
 
   document.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -188,6 +207,9 @@ export function initWall() {
     if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') go(current - 1);
   });
 
+  // Passive: none of the three ever calls preventDefault, and saying so keeps
+  // the compositor from blocking on them.
+  const passive = { passive: true } as const;
   let fromX: number | null = null;
   let fromY: number | null = null;
   let dragged = false;
@@ -199,7 +221,7 @@ export function initWall() {
     fromX = e.clientX;
     fromY = e.clientY;
     dragged = false;
-  });
+  }, passive);
   document.addEventListener('pointermove', (e) => {
     if (fromX === null || fromY === null || dragged) return;
     const dx = fromX - e.clientX;
@@ -217,13 +239,13 @@ export function initWall() {
       dragged = true;
       go(current + (dy > 0 ? 1 : -1));
     }
-  });
+  }, passive);
   const endDrag = () => {
     fromX = null;
     fromY = null;
   };
-  document.addEventListener('pointerup', endDrag);
-  document.addEventListener('pointercancel', endDrag);
+  document.addEventListener('pointerup', endDrag, passive);
+  document.addEventListener('pointercancel', endDrag, passive);
 
   // A swipe that started on a question must not also open it.
   document.addEventListener(
@@ -243,7 +265,18 @@ export function initWall() {
     paint(i === -1 ? 0 : i, false);
   });
 
-  window.addEventListener('resize', fit);
+  // One fit per frame at most: a phone rotating, or a mobile browser sliding its
+  // address bar away, fires resize far faster than the wall can be remeasured.
+  let queued = 0;
+  const scheduleFit = () => {
+    if (queued) return;
+    queued = requestAnimationFrame(() => {
+      queued = 0;
+      fit();
+    });
+  };
+  window.addEventListener('resize', scheduleFit, passive);
+  window.addEventListener('orientationchange', scheduleFit, passive);
   // Mono metrics land late; the tallest categories need the second measurement.
   document.fonts?.ready.then(fit);
   fit();

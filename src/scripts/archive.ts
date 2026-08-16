@@ -23,10 +23,13 @@ interface ArchiveCategory {
 
 const LOCK = 900;
 
-function restart(el: Element, cls = 'run') {
-  el.classList.remove(cls);
-  void (el as HTMLElement).offsetWidth;
-  el.classList.add(cls);
+/** One forced reflow for the whole set, never one per element. */
+function replay(els: (Element | null | undefined)[], cls = 'run') {
+  const live = els.filter(Boolean) as HTMLElement[];
+  if (!live.length) return;
+  for (const el of live) el.classList.remove(cls);
+  void live[0].offsetWidth;
+  for (const el of live) el.classList.add(cls);
 }
 
 /** Built as nodes, never as an HTML string: the text is content, not markup. */
@@ -90,9 +93,8 @@ export function initArchive() {
       }
       sweep.style.background = cat.bg;
       ring.style.borderColor = cat.ink;
-      restart(sweep);
-      restart(ring);
     }
+    const swept = Boolean(sweep && ring && rect);
 
     shell!.style.backgroundColor = cat.bg;
     shell!.style.color = cat.ink;
@@ -104,10 +106,7 @@ export function initArchive() {
       else band.removeAttribute('aria-current');
     });
 
-    if (title) {
-      title.textContent = cat.name;
-      restart(title);
-    }
+    if (title) title.textContent = cat.name;
     count?.replaceChildren(
       `${cat.rows.length} questions`,
       document.createElement('br'),
@@ -115,7 +114,10 @@ export function initArchive() {
     );
     if (wallLink) wallLink.href = cat.href;
 
+    // The rows are built with `.run` already on them, so only the three
+    // survivors need replaying — and they share a single reflow.
     list!.replaceChildren(...cat.rows.map(buildRow));
+    replay([title, swept ? sweep : null, swept ? ring : null]);
 
     document.title = `${cat.name} — all questions — MAGNITUDE`;
     if (push && cat.archiveHref !== location.pathname) {

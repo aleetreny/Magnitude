@@ -85,6 +85,11 @@ body::-webkit-scrollbar {
 .wordmark span {
   display: block;
 }
+/* The sweep starts at the bands and reaches this corner last, so the wordmark is
+   one of the few things still in the old ink when the colour changes. */
+.wordmark {
+  transition: color var(--sweep) var(--ease);
+}
 .wordmark span:nth-child(1) { font-size: 14px; }
 .wordmark span:nth-child(2) { font-size: 17px; }
 .wordmark span:nth-child(3) { font-size: 20px; }
@@ -122,7 +127,9 @@ body::-webkit-scrollbar {
   opacity: 0.75;
   transition:
     opacity 260ms ease,
-    gap 260ms var(--ease);
+    gap 260ms var(--ease),
+    color var(--sweep) var(--ease),
+    border-color var(--sweep) var(--ease);
 }
 .pill:hover,
 .pill:focus-visible {

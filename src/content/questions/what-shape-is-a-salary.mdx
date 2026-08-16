@@ -1,0 +1,60 @@
+---
+question: What shape is a salary?
+answer: Two shapes. Some trades stretch downwards and some stretch upwards — and which way a trade leans has almost nothing to do with what it pays.
+category: work
+sources:
+  - INE, Encuesta de Estructura Salarial
+  - CNO-11
+charts: 1
+readingMinutes: 2
+date: 2026-08-16
+draft: false
+---
+
+import Figure from '../../components/Figure.astro';
+import KeyNumber from '../../components/KeyNumber.astro';
+import WageShapes from '../../components/charts/WageShapes.astro';
+
+Take a trade's pay, divide it by its own median, and the money disappears.
+What is left is a shape.
+
+<Figure
+  n={1}
+  wide={true}
+  title="Forty-nine trades, drawn in multiples of their own median"
+  source="INE, Encuesta de Estructura Salarial 2022, table 36830 · gross annual pay, both sexes · 49 CNO-11 sub-major groups · each silhouette is scaled to its own median and its own peak"
+>
+  <WageShapes />
+</Figure>
+
+Read the wave from the top and the shapes tilt. At one end the mass hangs to
+the left of the middle: a long lower tail of part-time contracts and part-years
+— cleaning, kitchens, teaching, care. At the other it leans right: a minority
+who pull away on overtime, night shifts and seniority — painters, welders,
+electricians, mechanics.
+
+<KeyNumber
+  value="0.12"
+  note="The correlation between what a trade pays and which way it leans. The trades that stretch downwards have a median of €23,972; the ones that stretch upwards, €25,429. Same money, opposite shapes."
+/>
+
+So the shape is not a symptom of the pay. It is a second, independent fact
+about a job — one that the salary figure on the contract cannot tell you, and
+that decides whether the median is a promise or an average of two different
+lives.
+
+### Method
+
+The INE publishes five figures per occupation: the mean and the 10th, 25th,
+50th, 75th and 90th percentiles of gross annual pay, at the finest level where
+a wage distribution exists. The density between them is reconstructed by
+monotone (PCHIP) interpolation of the quantile function in log-salary, so it
+passes exactly through every published percentile; a check in the build refuses
+the dataset if any reconstructed percentile drifts from the published one.
+
+Lean is `log(p90/p50) ÷ log(p50/p10)` — how far the top half reaches against how
+far the bottom half does, so 1 means an even shape. The correlation quoted is
+Pearson's on log median pay against lean, across all 49 trades; Spearman's rank
+correlation is 0.16. Silhouettes are drawn out to 2.6 times each trade's own
+median, and beyond p10–p90 the curve is extrapolated rather than measured. A
+**†** marks estimates the INE flags as resting on 100–500 observations.

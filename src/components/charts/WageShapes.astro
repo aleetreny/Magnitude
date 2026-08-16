@@ -1,0 +1,344 @@
+---
+import { LEAN_INK, XMAX, allShapes } from '../../lib/wages';
+
+const shapes = allShapes().sort((a, b) => a.lean - b.lean);
+
+// Hatch: the angle carries the direction of the lean — ╲ where the bottom
+// stretches, ╱ where the top does — and the spacing carries how far. Ordered
+// texture, so it never contradicts the value it sits on.
+const HATCH = [
+  { angle: 135, gap: 3 },
+  { angle: 135, gap: 4.2 },
+  { angle: 135, gap: 5.6 },
+  { angle: 135, gap: 8 },
+  { angle: 45, gap: 5.6 },
+  { angle: 45, gap: 4.2 },
+  { angle: 45, gap: 3 },
+];
+
+// The server-rendered still: the same wave, drawn flat, for readers without
+// JavaScript and for the moment before the interactive one takes over.
+const SW = 1000;
+const SH = 774;
+const HEAD = 74;
+const rowH = (SH - HEAD - 8) / shapes.length;
+const still = (ys: [number, number][], row: number) => {
+  const h = rowH * 3.2;
+  const top = HEAD + row * rowH - h + rowH;
+  const x = (v: number) => 168 + (v / XMAX) * (SW - 192);
+  const y = (v: number) => top + h - v * h;
+  const pts = ys.map(([a, b]) => `${x(a).toFixed(1)},${y(b).toFixed(1)}`);
+  return `M${x(0).toFixed(1)},${(top + h).toFixed(1)}L${pts.join('L')}L${x(XMAX).toFixed(1)},${(top + h).toFixed(1)}Z`;
+};
+---
+
+<figure class="ws" data-wage-shapes>
+  <svg width="0" height="0" class="ws-defs" aria-hidden="true">
+    <defs>
+      {
+        HATCH.map((h, i) => (
+          <pattern
+            id={`ws-hatch-${i}`}
+            patternUnits="userSpaceOnUse"
+            width={h.gap}
+            height={h.gap}
+            patternTransform={`rotate(${h.angle})`}
+          >
+            <line
+              x1="0"
+              y1="0"
+              x2="0"
+              y2={h.gap}
+              stroke={LEAN_INK[i]}
+              stroke-width="1.15"
+            />
+          </pattern>
+        ))
+      }
+    </defs>
+  </svg>
+
+  <div class="ws-controls">
+    <div class="ws-seg" data-ws-control="layout" role="group" aria-label="Arrangement">
+      <button type="button" data-value="wave" aria-pressed="true">Wave</button>
+      <button type="button" data-value="grid" aria-pressed="false">Grid</button>
+    </div>
+    <div class="ws-seg" data-ws-control="order" role="group" aria-label="Order">
+      <button type="button" data-value="lean" aria-pressed="true">By lean</button>
+      <button type="button" data-value="pay" aria-pressed="false">By pay</button>
+      <button type="button" data-value="family" aria-pressed="false">By family</button>
+    </div>
+  </div>
+
+  <div class="ws-scale" aria-hidden="true">
+    <span>bottom stretches further</span>
+    <span class="ws-ramp">
+      {LEAN_INK.map((c) => <i style={`background:${c}`} />)}
+    </span>
+    <span>top stretches further</span>
+  </div>
+
+  <div class="ws-stage" data-shapes-stage>
+    <div class="ws-fallback" data-shapes-fallback>
+      <svg
+        viewBox={`0 0 ${SW} ${SH}`}
+        role="img"
+        aria-label="Forty-nine wage distributions drawn as silhouettes, ordered from those whose lower half stretches furthest to those whose upper half does"
+      >
+        {
+          shapes.map((s, i) => (
+            <g>
+              <path class="ws-f-paper" d={still(s.points, i)} />
+              <path
+                class="ws-f-ink"
+                d={still(s.points, i)}
+                fill={`url(#ws-hatch-${s.step})`}
+                stroke={s.ink}
+              />
+            </g>
+          ))
+        }
+        <line
+          class="ws-f-median"
+          x1={168 + (1 / XMAX) * (SW - 192)}
+          x2={168 + (1 / XMAX) * (SW - 192)}
+          y1={HEAD - 46}
+          y2={SH}
+        />
+      </svg>
+    </div>
+  </div>
+
+  <div class="ws-readout is-empty" data-shapes-readout aria-live="polite">
+    <p class="ws-ro-name" data-ws-name>Pick out a shape</p>
+    <p class="ws-ro-lean" data-ws-lean>
+      Every silhouette is one trade, drawn in multiples of its own median.
+    </p>
+    <p class="ws-ro-nums mono" data-ws-nums></p>
+  </div>
+</figure>
+
+<script>
+  import { initWageShapes } from '../../scripts/wage-shapes';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-wage-shapes]')) {
+    initWageShapes(root);
+  }
+</script>
+
+<style>
+  .ws {
+    margin: 0;
+  }
+
+  .ws-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+  }
+
+  .ws-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    padding-bottom: 16px;
+  }
+
+  .ws-seg {
+    display: inline-flex;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 2px;
+  }
+
+  .ws-seg button {
+    appearance: none;
+    border: 0;
+    background: none;
+    border-radius: 999px;
+    padding: 8px 14px;
+    min-height: 34px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition:
+      background-color 200ms ease,
+      color 200ms ease;
+  }
+
+  .ws-seg button[aria-pressed='true'] {
+    background: var(--accent-wash);
+    color: var(--ink);
+  }
+
+  .ws-seg button:hover:not([aria-pressed='true']) {
+    color: var(--ink);
+  }
+
+  .ws-scale {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 12px;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .ws-ramp {
+    display: inline-flex;
+  }
+
+  .ws-ramp i {
+    width: 22px;
+    height: 7px;
+  }
+
+  .ws-stage {
+    position: relative;
+    cursor: crosshair;
+  }
+
+  .ws-fallback svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .ws-fallback .ws-f-paper {
+    fill: var(--paper);
+  }
+
+  .ws-fallback .ws-f-ink {
+    stroke-width: 1;
+  }
+
+  .ws-fallback .ws-f-median {
+    stroke: var(--ink);
+    stroke-width: 1;
+    stroke-opacity: 0.42;
+    stroke-dasharray: 1 5;
+  }
+
+  .ws-readout {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+    min-height: 74px;
+  }
+
+  .ws-ro-name {
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .ws-readout.is-empty .ws-ro-name {
+    color: var(--ink-soft);
+  }
+
+  .ws-ro-lean {
+    margin: 4px 0 0;
+    font-size: 15px;
+    color: var(--ink-soft);
+  }
+
+  .ws-ro-nums {
+    margin: 6px 0 0;
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 819px) {
+    .ws-scale span:first-child,
+    .ws-scale span:last-child {
+      font-size: 8.5px;
+    }
+    .ws-ramp i {
+      width: 14px;
+    }
+    .ws-ro-name {
+      font-size: 17px;
+    }
+  }
+</style>
+
+<style is:global>
+  /* Built by the script, so out of reach of Astro's scoping. */
+  .ws .ws-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .ws .ws-shape {
+    transition: opacity 260ms ease;
+  }
+
+  .ws .ws-paper {
+    fill: var(--paper);
+    stroke: none;
+  }
+
+  .ws .ws-ink {
+    stroke-width: 1;
+    stroke-linejoin: round;
+    transition: stroke-width 200ms ease;
+  }
+
+  .ws .ws-shape.is-dimmed {
+    opacity: 0.22;
+  }
+
+  .ws .ws-shape.is-active .ws-ink {
+    stroke-width: 2;
+  }
+
+  .ws .ws-median {
+    stroke: var(--ink);
+    stroke-width: 1;
+    stroke-opacity: 0.42;
+    stroke-dasharray: 1 5;
+    shape-rendering: crispEdges;
+    pointer-events: none;
+  }
+
+  .ws .ws-median-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    fill: var(--ink-soft);
+  }
+
+  .ws .ws-ghost-path {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1;
+    stroke-dasharray: 2 3;
+    stroke-opacity: 0.5;
+  }
+
+  .ws .ws-name {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    fill: var(--ink-soft);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ws .ws-shape,
+    .ws .ws-ink {
+      transition: none;
+    }
+  }
+</style>

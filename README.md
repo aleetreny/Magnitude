@@ -15,7 +15,8 @@ Three surfaces:
 Astro + MDX, static output, hand-written CSS, no UI framework. Most charts are
 computed with D3 scales at build time and shipped as inert inline SVG, so a post
 is plain HTML by the time it reaches a browser. One — the wage explorer — is
-interactive, and still server-renders a still for readers without JavaScript.
+interactive, and still server-renders a flat version for readers without
+JavaScript.
 
 ---
 
@@ -104,7 +105,7 @@ column below 1200px.
 ## Charts
 
 Three components. `BarChart` and `LineChart` compute their geometry with D3
-scales at build time and ship no JavaScript at all; `WageExplorer` is the one
+scales at build time and ship no JavaScript at all; `WageShapes` is the one
 interactive chart on the site.
 
 **`<BarChart>`** — comparing magnitude across named things.
@@ -120,9 +121,13 @@ interactive chart on the site.
 />
 ```
 
-**`<WageExplorer>`** — the interactive quantile explorer built for the wages
-post. It reads `src/data/wages.json` and needs no props. The only chart on the
-site that ships JavaScript; everything else is inert SVG.
+**`<WageShapes>`** — the engraved silhouettes built for the wages post. Reads
+`src/data/wages.json`, takes no props. The only chart on the site that ships
+JavaScript; everything else is inert SVG. Two arrangements — a stacked wave and
+a 7×7 specimen sheet — with the shapes morphing between them, and three
+orderings. Direction of lean is carried twice, by a diverging ink and by the
+hatch angle (╲ where the bottom stretches, ╱ where the top does), with the
+spacing of the hatch carrying how far, so it never rests on colour alone.
 
 **`<LineChart>`** — change over a continuous x (time, months, age).
 
@@ -149,6 +154,9 @@ chart, so no value is reachable only by looking.
 
 These are not stylistic preferences; breaking them makes charts that mislead.
 
+- **Text set into SVG needs an inline style, not a presentation attribute.** A
+  stylesheet rule beats `.attr('font-size', …)`, so a label sized that way keeps
+  the CSS size and any width you computed from it is wrong. `.style()` wins.
 - **Six series colours, in order**, set in `src/lib/chart.ts`. They are
   validated as a categorical set against this site's paper (`#fdfdfc`):
   lightness band, chroma floor, protanopia/deuteranopia separation (worst
@@ -177,8 +185,8 @@ These are not stylistic preferences; breaking them makes charts that mislead.
 Astro scopes a component's `<style>` by stamping a `data-astro-cid-*` attribute
 on the elements it renders. Anything **built by a script at runtime** never gets
 that attribute, so its rules must live in a `<style is:global>` block, fenced
-behind the component's root class. `WageExplorer.astro` does this for its SVG,
-its readout rows and its table. Put a runtime element's styles in the scoped
+behind the component's root class. `WageShapes.astro` does this for its
+silhouettes, its rules and its labels. Put a runtime element's styles in the scoped
 block and they will simply not apply.
 
 ---

@@ -64,16 +64,28 @@ const still = (ys: [number, number][], row: number) => {
   </svg>
 
   <div class="ws-controls">
-    <div class="ws-seg" data-ws-control="layout" role="group" aria-label="Arrangement">
-      <button type="button" data-value="wave" aria-pressed="true">Wave</button>
-      <button type="button" data-value="grid" aria-pressed="false">Grid</button>
+    <div class="ws-ctl">
+      <span class="ws-ctl-label" id="ws-lay">Show them</span>
+      <div class="ws-seg" data-ws-control="layout" role="group" aria-labelledby="ws-lay">
+        <button type="button" data-value="wave" aria-pressed="true">Overlapping</button>
+        <button type="button" data-value="grid" aria-pressed="false">One by one</button>
+      </div>
     </div>
-    <div class="ws-seg" data-ws-control="order" role="group" aria-label="Order">
-      <button type="button" data-value="lean" aria-pressed="true">By lean</button>
-      <button type="button" data-value="pay" aria-pressed="false">By pay</button>
-      <button type="button" data-value="family" aria-pressed="false">By family</button>
+    <div class="ws-ctl">
+      <span class="ws-ctl-label" id="ws-ord">Put them in order of</span>
+      <div class="ws-seg" data-ws-control="order" role="group" aria-labelledby="ws-ord">
+        <button type="button" data-value="lean" aria-pressed="true">Shape</button>
+        <button type="button" data-value="pay" aria-pressed="false">Pay</button>
+        <button type="button" data-value="family" aria-pressed="false">Kind of work</button>
+      </div>
     </div>
   </div>
+
+  {/* What the buttons just did, in a sentence. Swapped by the script. */}
+  <p class="ws-explain" data-ws-explain>
+    Sorted by shape: the jobs with the longest low-pay tail first, the ones with
+    the longest high-pay tail last.
+  </p>
 
   <div class="ws-scale" aria-hidden="true">
     <span>long tail of low pay</span>
@@ -82,6 +94,25 @@ const still = (ys: [number, number][], row: number) => {
     </span>
     <span>long tail of high pay</span>
   </div>
+
+  {/* The two marks on the chart that no reader can guess. */}
+  <ul class="ws-key">
+    <li>
+      <svg class="ws-key-mark" viewBox="0 0 26 12" aria-hidden="true">
+        <line x1="13" y1="0" x2="13" y2="12" class="ws-key-dotted" />
+      </svg>
+      <span>the job’s own middle wage — half its people earn less, half more</span>
+    </li>
+    <li>
+      <svg class="ws-key-mark" viewBox="0 0 26 12" aria-hidden="true">
+        <path d="M1 11 C7 11 7 2 13 2 C19 2 19 11 25 11" class="ws-key-dashed" />
+      </svg>
+      <span>
+        appears when you pick a job: the <strong>average of all 49</strong>, so you can
+        see how that one differs from a typical job
+      </span>
+    </li>
+  </ul>
 
   <div class="ws-stage" data-shapes-stage>
     <div class="ws-fallback" data-shapes-fallback>
@@ -152,8 +183,84 @@ const still = (ys: [number, number][], row: number) => {
   .ws-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px 16px;
-    padding-bottom: 16px;
+    gap: 14px 28px;
+    padding-bottom: 14px;
+  }
+
+  /* Each control says what it does. A row of unlabelled pills is a puzzle. */
+  .ws-ctl {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .ws-ctl-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .ws-explain {
+    margin: 0 0 16px;
+    max-width: 62ch;
+    color: var(--ink-soft);
+    font-size: 0.94em;
+    line-height: 1.5;
+  }
+
+  .ws-key {
+    margin: 0 0 18px;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 30px;
+  }
+
+  .ws-key li {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    max-width: 46ch;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    line-height: 1.45;
+    color: var(--ink-soft);
+  }
+
+  .ws-key strong {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .ws-key-mark {
+    flex: none;
+    width: 26px;
+    height: 12px;
+    overflow: visible;
+  }
+
+  /* A key has to be legible even where the mark it stands for is deliberately
+     faint, so both swatches are drawn at full strength and on a denser dash
+     than the chart uses — at 12px the chart's own 1-on-5 pattern renders as
+     two dots and reads as nothing at all. */
+  .ws-key-dotted {
+    stroke: var(--ink);
+    stroke-width: 1.4;
+    stroke-opacity: 0.75;
+    stroke-dasharray: 1.5 2.5;
+  }
+
+  .ws-key-dashed {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.4;
+    stroke-dasharray: 2.5 2.5;
+    stroke-opacity: 0.75;
   }
 
   .ws-seg {

@@ -113,6 +113,24 @@ export function initWageShapes(root: HTMLElement) {
   let H = 0;
   let wide = true;
 
+  /**
+   * What the buttons just did, said in words. A reader who has not been told
+   * what "by lean" means cannot tell whether the order changed or the data did.
+   */
+  const ORDER_TEXT: Record<Order, string> = {
+    lean: 'Sorted by shape: the jobs with the longest low-pay tail first, the ones with the longest high-pay tail last.',
+    pay: 'Sorted by pay: the worst paid job first, the best paid last — which scatters the colours, because the two have almost nothing to do with each other.',
+    family: 'Grouped by kind of work, in the official order: managers first, then professionals, technicians, clerical, services, trades, and labouring last.',
+  };
+  const LAYOUT_TEXT: Record<Layout, string> = {
+    wave: '',
+    grid: ' Each one is drawn in its own box, at its own size.',
+  };
+  const explain = root.querySelector<HTMLElement>('[data-ws-explain]');
+  function updateExplain() {
+    if (explain) explain.textContent = ORDER_TEXT[order] + LAYOUT_TEXT[layout];
+  }
+
   const sorted = () => {
     const list = [...shapes];
     if (order === 'lean') list.sort((a, b) => a.lean - b.lean);
@@ -190,6 +208,7 @@ export function initWageShapes(root: HTMLElement) {
   }
 
   function render() {
+    updateExplain();
     measure();
     const placed = place();
     // Where each trade's own median falls. Without it "leans left" is a claim
@@ -386,16 +405,17 @@ export function initWageShapes(root: HTMLElement) {
     }
     readout.querySelector('[data-ws-name]')!.textContent =
       p.label + (p.lowSample ? ' †' : '');
+    // Plain words, not `lean 0.57`. The number is in the method note for anyone
+    // who wants it; here it only has to say which way this job stretches.
     const dir =
       p.lean < 0.93
-        ? 'the bottom stretches further'
+        ? 'Long tail of low pay: more people fall far below this job\u2019s middle wage than climb far above it.'
         : p.lean > 1.07
-          ? 'the top stretches further'
-          : 'both halves reach equally far';
-    readout.querySelector('[data-ws-lean]')!.textContent =
-      `${dir} · lean ${p.lean.toFixed(2)}`;
+          ? 'Long tail of high pay: more people climb far above this job\u2019s middle wage than fall far below it.'
+          : 'Even: people reach about as far below this job\u2019s middle wage as above it.';
+    readout.querySelector('[data-ws-lean]')!.textContent = dir;
     readout.querySelector('[data-ws-nums]')!.textContent =
-      `p10 ${formatEuro(p.p10)} · median ${formatEuro(p.median)} · p90 ${formatEuro(p.p90)}`;
+      `lowest tenth under ${formatEuro(p.p10)} · middle wage ${formatEuro(p.median)} · highest tenth over ${formatEuro(p.p90)}`;
   }
 
   // ------------------------------------------------------------ interaction

@@ -12,6 +12,8 @@
 
   /* Article palette — mostly white so the chart owns the colour ----------- */
   --paper: #fdfdfc;
+  /* The same colour as channels, for washes that need an alpha. */
+  --paper-rgb: 253 253 252;
   --ink: #16181a;
   --ink-soft: #6b7176;
   --rule: rgba(22, 24, 26, 0.14);

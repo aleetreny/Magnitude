@@ -1,0 +1,232 @@
+---
+/**
+ * How to read one shape.
+ *
+ * The wave of forty-nine is unreadable until you have decoded a single
+ * silhouette, so this draws two of them first — one that leans each way — on a
+ * shared euro axis, annotated in plain words. Shared is the whole point: the
+ * gap between the two lower tails is a distance you can see, not a claim you
+ * have to take on trust.
+ */
+import { LEAN_INK, WAGES, gridValue, leanOf, leanStep } from '../../lib/wages';
+
+const PAIR = ['tecnicos-sanitarios', 'soldadores'] as const;
+
+/** The euro window both panels share. Wide enough for both p90s, no wider. */
+const XMIN = 0;
+const XMAX = 56000;
+
+const W = 470;
+const H = 250;
+const PAD = { top: 34, right: 16, bottom: 46, left: 16 };
+const plotW = W - PAD.left - PAD.right;
+const plotH = H - PAD.top - PAD.bottom;
+
+const x = (euro: number) => PAD.left + ((euro - XMIN) / (XMAX - XMIN)) * plotW;
+
+const euro = (n: number) => `€${Math.round(n).toLocaleString('en-GB')}`;
+
+const panels = PAIR.map((id) => {
+  const o = WAGES.occupations.find((c) => c.id === id)!;
+  const lean = leanOf(o);
+  const step = leanStep(lean);
+  const ink = LEAN_INK[step]!;
+
+  // Density in euros, height as a share of this trade's own peak.
+  const pts: [number, number][] = [];
+  for (let i = 0; i < o.d.length; i += 2) {
+    const v = gridValue(o.d0 + i);
+    if (v > XMAX) break;
+    pts.push([v, o.d[i]! / 1000]);
+  }
+  const y = (h: number) => PAD.top + plotH - h * plotH;
+  const line = pts.map(([v, h]) => `${x(v).toFixed(1)},${y(h).toFixed(1)}`).join('L');
+  const d = `M${x(pts[0]![0]).toFixed(1)},${y(0).toFixed(1)}L${line}L${x(pts[pts.length - 1]![0]).toFixed(1)},${y(0).toFixed(1)}Z`;
+
+  // The tail below p10 — the part the annotation points at — as its own path.
+  const tail = pts.filter(([v]) => v <= o.p['10']);
+  const tailD = tail.length
+    ? `M${x(tail[0]![0]).toFixed(1)},${y(0).toFixed(1)}L${tail
+        .map(([v, h]) => `${x(v).toFixed(1)},${y(h).toFixed(1)}`)
+        .join('L')}L${x(o.p['10']).toFixed(1)},${y(0).toFixed(1)}Z`
+    : '';
+
+  return {
+    id,
+    label: o.label,
+    official: o.official,
+    ink,
+    step,
+    d,
+    tailD,
+    p10: o.p['10'],
+    median: o.p['50'],
+    p90: o.p['90'],
+    lean,
+  };
+});
+
+const [low, high] = panels;
+const floorGap = high!.p10 - low!.p10;
+---
+
+<figure class="sp">
+  <p class="sp-how">
+    Each silhouette below is <strong>one job</strong>. Left to right is what people in
+    it are paid a year; the curve is <strong>how many earn that much</strong> — tall
+    where the job is crowded, flat where almost nobody is. Both are drawn on the
+    same euro scale, so they can be compared directly.
+  </p>
+
+  <div class="sp-grid">
+    {
+      panels.map((p) => (
+        <div class="sp-panel">
+          <p class="sp-name">{p.label}</p>
+          <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${p.official}: the lowest paid tenth earn under ${euro(p.p10)}, the middle wage is ${euro(p.median)}, and the highest paid tenth earn over ${euro(p.p90)}.`}>
+            {/* The tail under p10, filled solid: the thing being pointed at. */}
+            {p.tailD && <path class="sp-tail" d={p.tailD} fill={p.ink} />}
+            <path class="sp-body" d={p.d} fill={p.ink} stroke={p.ink} />
+
+            {/* The middle wage. */}
+            <line class="sp-med" x1={x(p.median)} x2={x(p.median)} y1={PAD.top - 22} y2={H - PAD.bottom} />
+            <text class="sp-med-tag" x={x(p.median)} y={PAD.top - 26} text-anchor="middle">
+              middle wage {euro(p.median)}
+            </text>
+
+            {/* Where the lowest tenth stops. */}
+            <line class="sp-tick" x1={x(p.p10)} x2={x(p.p10)} y1={H - PAD.bottom} y2={H - PAD.bottom + 8} />
+            <text class="sp-tick-tag" x={x(p.p10)} y={H - PAD.bottom + 22} text-anchor="middle">
+              {euro(p.p10)}
+            </text>
+            <text class="sp-tick-sub" x={x(p.p10)} y={H - PAD.bottom + 34} text-anchor="middle">
+              lowest tenth under
+            </text>
+
+            {/* Where the highest tenth starts. */}
+            <line class="sp-tick" x1={x(p.p90)} x2={x(p.p90)} y1={H - PAD.bottom} y2={H - PAD.bottom + 8} />
+            <text class="sp-tick-tag" x={x(p.p90)} y={H - PAD.bottom + 22} text-anchor="middle">
+              {euro(p.p90)}
+            </text>
+            <text class="sp-tick-sub" x={x(p.p90)} y={H - PAD.bottom + 34} text-anchor="middle">
+              highest tenth over
+            </text>
+
+            <line class="sp-base" x1={PAD.left} x2={W - PAD.right} y1={H - PAD.bottom} y2={H - PAD.bottom} />
+          </svg>
+        </div>
+      ))
+    }
+  </div>
+
+  <p class="sp-punch">
+    Both jobs pay about the same in the middle — {euro(low!.median)} against{' '}
+    {euro(high!.median)}. But the lowest paid tenth of{' '}
+    <strong>{low!.label}</strong> earn under {euro(low!.p10)}, while the lowest paid
+    tenth of <strong>{high!.label}</strong> earn {euro(high!.p10)}. That is{' '}
+    {euro(floorGap)} of difference at the floor, under almost the same middle wage.
+    The filled tail on the left is what that looks like.
+  </p>
+</figure>
+
+<style>
+  .sp {
+    margin: 0;
+  }
+
+  .sp-how {
+    margin: 0 0 26px;
+    max-width: 60ch;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+
+  .sp-how strong,
+  .sp-punch strong {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .sp-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 30px 26px;
+  }
+
+  .sp-panel svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .sp-name {
+    margin: 0 0 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  /* The body is a wash; only the tail under p10 is solid, because that is the
+     part the sentence underneath is about. */
+  .sp-body {
+    fill-opacity: 0.14;
+    stroke-width: 1.4;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .sp-tail {
+    fill-opacity: 0.85;
+  }
+
+  .sp-med {
+    stroke: var(--ink);
+    stroke-width: 1;
+    stroke-dasharray: 2 3;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .sp-base,
+  .sp-tick {
+    stroke: var(--rule);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .sp-med-tag,
+  .sp-tick-tag,
+  .sp-tick-sub {
+    font-family: var(--mono);
+    fill: var(--ink-soft);
+  }
+
+  .sp-med-tag {
+    font-size: 11px;
+    fill: var(--ink);
+  }
+
+  .sp-tick-tag {
+    font-size: 11px;
+    fill: var(--ink);
+  }
+
+  .sp-tick-sub {
+    font-size: 9px;
+    letter-spacing: 0.06em;
+  }
+
+  .sp-punch {
+    margin: 28px 0 0;
+    max-width: 62ch;
+    line-height: 1.55;
+  }
+
+  @media (max-width: 760px) {
+    .sp-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 26px;
+    }
+  }
+</style>

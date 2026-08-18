@@ -1,0 +1,72 @@
+---
+/**
+ * The method note, folded away.
+ *
+ * Every figure still has to say where it came from and what was reconstructed
+ * rather than measured — that is not optional. But it is reference material,
+ * not reading, and left open it outweighs the article it belongs to.
+ */
+---
+
+<details class="method">
+  <summary><span>Method and sources</span></summary>
+  <div class="method-body"><slot /></div>
+</details>
+
+<style>
+  .method {
+    margin: 3.4em 0 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 16px 0;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 200ms ease;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary:hover {
+    color: var(--ink);
+  }
+
+  /* A plain rotating caret, drawn in type so it needs no asset. */
+  summary::after {
+    content: '+';
+    font-size: 14px;
+    line-height: 1;
+    transition: transform 240ms var(--ease);
+  }
+
+  .method[open] summary::after {
+    transform: rotate(45deg);
+  }
+
+  .method-body {
+    padding-bottom: 8px;
+    color: var(--ink-soft);
+    font-size: 0.92em;
+  }
+
+  .method-body :global(p) {
+    margin: 0 0 1em;
+    line-height: 1.6;
+  }
+
+  .method-body :global(code) {
+    font-family: var(--mono);
+    font-size: 0.92em;
+  }
+</style>

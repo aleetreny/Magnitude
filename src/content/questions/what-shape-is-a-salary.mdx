@@ -5,7 +5,7 @@ category: work
 sources:
   - INE, Encuesta de Estructura Salarial
   - CNO-11
-charts: 1
+charts: 2
 readingMinutes: 2
 date: 2026-08-16
 draft: false
@@ -13,48 +13,67 @@ draft: false
 
 import Figure from '../../components/Figure.astro';
 import KeyNumber from '../../components/KeyNumber.astro';
+import Method from '../../components/Method.astro';
+import ShapePrimer from '../../components/charts/ShapePrimer.astro';
 import WageShapes from '../../components/charts/WageShapes.astro';
 
-Take a trade's pay, divide it by its own median, and the money disappears.
-What is left is a shape.
+A wage is usually one number. But almost nobody is paid the average of their job, and
+the way people spread around it has a shape.
 
 <Figure
   n={1}
   wide={true}
-  title="Forty-nine trades, drawn in multiples of their own median"
+  title="Two jobs that pay the same in the middle, and nothing like it at the edges"
+  source="INE, Encuesta de Estructura Salarial 2022, table 36830 · gross annual pay, both sexes · both panels share one euro scale"
+>
+  <ShapePrimer />
+</Figure>
+
+Every job has one of these shapes. Here are all forty-nine, sorted: longest low
+tail at the top, longest high tail at the bottom. Each is drawn against **its
+own** middle wage, so the money is divided out and only the form is left. Tap
+any of them to see which job it is.
+
+<Figure
+  n={2}
+  wide={true}
+  title="Forty-nine trades, each drawn against its own middle wage"
   source="INE, Encuesta de Estructura Salarial 2022, table 36830 · gross annual pay, both sexes · 49 CNO-11 sub-major groups · each silhouette is scaled to its own median and its own peak"
 >
   <WageShapes />
 </Figure>
 
-Read the wave from the top and the shapes tilt. At one end the mass hangs to
-the left of the middle: a long lower tail of part-time contracts and part-years
-— cleaning, kitchens, teaching, care. At the other it leans right: a minority
-who pull away on overtime, night shifts and seniority — painters, welders,
-electricians, mechanics.
+Two families fall out. At the top, a long tail of part-time contracts and
+part-years — cleaning, kitchens, teaching, care. At the bottom, the opposite: a
+minority pulling away on overtime, night shifts and seniority — painters,
+welders, electricians, mechanics.
 
 <KeyNumber
   value="0.12"
-  note="The correlation between what a trade pays and which way it leans. The trades that stretch downwards have a median of €23,972; the ones that stretch upwards, €25,429. Same money, opposite shapes."
+  note="The correlation between what a job pays and which way it leans — near enough to zero to mean nothing. Jobs that stretch downwards have a middle wage of €23,972; the ones that stretch upwards, €25,429. Same money, opposite shapes."
 />
 
-So the shape is not a symptom of the pay. It is a second, independent fact
-about a job — one that the salary figure on the contract cannot tell you, and
-that decides whether the median is a promise or an average of two different
-lives.
+So the shape is not a symptom of the pay. It is a second fact about a job, and
+the one that decides whether the wage on the contract is a promise or an average
+of two different lives.
 
-### Method
+<Method>
 
 The INE publishes five figures per occupation: the mean and the 10th, 25th,
-50th, 75th and 90th percentiles of gross annual pay, at the finest level where
-a wage distribution exists. The density between them is reconstructed by
-monotone (PCHIP) interpolation of the quantile function in log-salary, so it
-passes exactly through every published percentile; a check in the build refuses
-the dataset if any reconstructed percentile drifts from the published one.
+50th, 75th and 90th percentiles of gross annual pay. The curve between them is
+reconstructed by monotone (PCHIP) interpolation in log-salary, so it passes
+exactly through every published percentile; the build refuses the dataset if any
+reconstructed percentile drifts from the published one. Everything outside
+p10–p90 is extrapolated rather than measured.
 
 Lean is `log(p90/p50) ÷ log(p50/p10)` — how far the top half reaches against how
-far the bottom half does, so 1 means an even shape. The correlation quoted is
-Pearson's on log median pay against lean, across all 49 trades; Spearman's rank
-correlation is 0.16. Silhouettes are drawn out to 2.6 times each trade's own
-median, and beyond p10–p90 the curve is extrapolated rather than measured. A
-**†** marks estimates the INE flags as resting on 100–500 observations.
+far the bottom half does, so 1 is an even shape. The correlation quoted is
+Pearson's on log middle wage against lean across all 49 trades; Spearman's is
+0.16. A **†** marks estimates the INE flags as resting on 100–500 observations.
+
+The survey covers employees only, so the self-employed are out, and with them
+the proprietor sub-groups, domestic work and military occupations. Occupation
+names keep the INE's own Spanish wording, since they are official category
+names.
+
+</Method>

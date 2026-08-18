@@ -76,11 +76,11 @@ const still = (ys: [number, number][], row: number) => {
   </div>
 
   <div class="ws-scale" aria-hidden="true">
-    <span>bottom stretches further</span>
+    <span>long tail of low pay</span>
     <span class="ws-ramp">
       {LEAN_INK.map((c) => <i style={`background:${c}`} />)}
     </span>
-    <span>top stretches further</span>
+    <span>long tail of high pay</span>
   </div>
 
   <div class="ws-stage" data-shapes-stage>
@@ -110,9 +110,6 @@ const still = (ys: [number, number][], row: number) => {
           y1={HEAD - 46}
           y2={SH}
         />
-        <text class="ws-f-tag" x={168 + (1 / XMAX) * (SW - 192)} y={HEAD - 54}>
-          its own median
-        </text>
         {
           [0, shapes.length - 1].map((row) => (
             <text class="ws-f-name" x={156} y={HEAD + row * rowH + rowH - 2}>
@@ -125,9 +122,10 @@ const still = (ys: [number, number][], row: number) => {
   </div>
 
   <div class="ws-readout is-empty" data-shapes-readout aria-live="polite">
-    <p class="ws-ro-name" data-ws-name>Pick out a shape</p>
+    <p class="ws-ro-name" data-ws-name>Tap a shape to name it</p>
     <p class="ws-ro-lean" data-ws-lean>
-      Every silhouette is one trade, drawn in multiples of its own median.
+      Each silhouette is one job. Left of the dotted line people earn less than the
+      job’s middle wage, right of it more.
     </p>
     <p class="ws-ro-nums mono" data-ws-nums></p>
   </div>
@@ -347,6 +345,22 @@ const still = (ys: [number, number][], row: number) => {
     font-size: 9px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+    fill: var(--ink-soft);
+  }
+
+  /* The x axis. Every silhouette is drawn against its own middle wage, so the
+     scale is multiples of that wage rather than euros — which is exactly the
+     thing a reader cannot guess and has to be told. */
+  .ws .ws-axis-tick {
+    stroke: var(--rule);
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+  }
+
+  .ws .ws-axis-tag {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
     fill: var(--ink-soft);
   }
 

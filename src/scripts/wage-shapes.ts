@@ -40,6 +40,8 @@ const SAMPLES = 96;
 const WAVE_HEAD = 74;
 /** Space under the last grid row for its name. */
 const GRID_LABEL = 18;
+/** Room under the wave for its x axis. */
+const AXIS_FOOT = 26;
 
 /**
  * IBM Plex Mono advances 0.6em per glyph and the label adds 0.06em of
@@ -105,6 +107,7 @@ export function initWageShapes(root: HTMLElement) {
   // only ever show in the gaps.
   const gRule = svg.append('g').attr('class', 'ws-rule');
   const gLabels = svg.append('g').attr('class', 'ws-labels');
+  const gAxis = svg.append('g').attr('class', 'ws-axis');
 
   let W = 0;
   let H = 0;
@@ -182,7 +185,8 @@ export function initWageShapes(root: HTMLElement) {
       const rows = Math.ceil(shapes.length / cols);
       H = rows * (wide ? 96 : 74) + (rows - 1) * (wide ? 34 : 26) + GRID_LABEL + 4;
     }
-    svg.attr('viewBox', `0 0 ${W} ${H}`).attr('width', W).attr('height', H);
+    const total = H + (layout === 'wave' ? AXIS_FOOT : 0);
+    svg.attr('viewBox', `0 0 ${W} ${total}`).attr('width', W).attr('height', total);
   }
 
   function render() {
@@ -191,6 +195,7 @@ export function initWageShapes(root: HTMLElement) {
     // Where each trade's own median falls. Without it "leans left" is a claim
     // rather than something you can see.
     drawMedianRule(placed);
+    drawAxis(placed);
 
     // The ghost of the typical shape, behind whichever silhouette is active.
     const ghostData = active ? placed.filter((p) => p.id === active) : [];
@@ -285,6 +290,51 @@ export function initWageShapes(root: HTMLElement) {
 
   const dur = () => (first ? 0 : 900);
 
+  /**
+   * The wave's x axis. Without it the reader can see that a shape leans, but
+   * has no way to say how far — "left" and "right" are only a direction until
+   * they are given a number.
+   */
+  const AXIS = [
+    { at: 0.5, label: 'half' },
+    { at: 1, label: 'middle wage' },
+    { at: 1.5, label: '1\u00bd\u00d7' },
+    { at: 2, label: '2\u00d7' },
+    { at: 2.5, label: '2\u00bd\u00d7' },
+  ];
+
+  function drawAxis(placed: Placed[]) {
+    if (layout !== 'wave' || !placed.length) {
+      gAxis.selectAll('*').remove();
+      return;
+    }
+    const p = placed[0]!;
+    const ticks = AXIS.map((t) => ({ ...t, x: p.x + (t.at / XMAX) * p.w }));
+    const g = gAxis
+      .selectAll<SVGGElement, (typeof ticks)[number]>('g')
+      .data(ticks, (t) => String(t.at));
+    g.exit().remove();
+    const enter = g.enter().append('g');
+    enter.append('line').attr('class', 'ws-axis-tick');
+    enter.append('text').attr('class', 'ws-axis-tag').attr('text-anchor', 'middle');
+    const all = enter.merge(g);
+    all
+      .select('line')
+      .attr('y1', H - 2)
+      .attr('y2', H + 4)
+      .transition()
+      .duration(dur())
+      .attr('x1', (t) => t.x)
+      .attr('x2', (t) => t.x);
+    all
+      .select('text')
+      .text((t) => t.label)
+      .attr('y', H + 16)
+      .transition()
+      .duration(dur())
+      .attr('x', (t) => t.x);
+  }
+
   function drawMedianRule(placed: Placed[]) {
     const at = (p: Placed) => p.x + (1 / XMAX) * p.w;
     if (layout === 'wave') {
@@ -302,18 +352,9 @@ export function initWageShapes(root: HTMLElement) {
         .attr('x2', x)
         .attr('y1', WAVE_HEAD - 46)
         .attr('y2', H);
-      const tag = gRule.selectAll<SVGTextElement, number>('text').data([x]);
-      tag
-        .enter()
-        .append('text')
-        .attr('class', 'ws-median-tag')
-        .attr('text-anchor', 'middle')
-        .merge(tag)
-        .text('its own median')
-        .transition()
-        .duration(dur())
-        .attr('x', x)
-        .attr('y', WAVE_HEAD - 54);
+      // No tag above the line: the x axis at the foot already names it, and
+      // two identical labels on one dotted rule read as a mistake.
+      gRule.selectAll('text').remove();
       return;
     }
     gRule.selectAll('text').remove();
@@ -337,9 +378,9 @@ export function initWageShapes(root: HTMLElement) {
     const p = placed.find((s) => s.id === active);
     readout.classList.toggle('is-empty', !p);
     if (!p) {
-      readout.querySelector('[data-ws-name]')!.textContent = 'Pick out a shape';
+      readout.querySelector('[data-ws-name]')!.textContent = 'Tap a shape to name it';
       readout.querySelector('[data-ws-lean]')!.textContent =
-        'Every silhouette is one trade, drawn in multiples of its own median.';
+        'Each silhouette is one job. Left of the dotted line people earn less than the job\u2019s middle wage, right of it more.';
       readout.querySelector('[data-ws-nums]')!.textContent = '';
       return;
     }

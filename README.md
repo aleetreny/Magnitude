@@ -152,14 +152,25 @@ the labels shrinking with it. A `Show the numbers` table sits under every line
 chart, so no value is reachable only by looking.
 
 **`<Doorways>`** — where a set of countries sits on one axis, and how little
-each has moved along it. Reads `src/data/leaving-home.json`, takes an optional
-`caption` and a `highlight` country code. Each row is a door at the latest
-reading with the two survey eras banded behind it, in separate lanes: the
-dataset carries a break in series, so the eras must never be read as a before
-and an after. Horizontal positions are percentages, everything vertical is CSS
-pixels, and there is no SVG at all — the marks are boxes, which is why it
-reflows on a phone instead of scrolling. The magnified key becomes a named list
-under 860px, where callouts can no longer sit clear of the marks.
+each has moved along it. Reads `src/data/leaving-home.json` and takes an
+optional `highlight` country code. Each row carries two marks and no more: a
+door at the latest reading, and one hairline per earlier year, on the travel
+line joining them. The second mark is the same quantity as the first, one year
+at a time, so there is nothing to learn before the chart can be read — the key
+is the marks themselves, set in the line that names them, and there is no legend
+box at all.
+
+Only one survey is drawn. The dataset carries a break in series, and a figure
+from either side of it is not the same measurement, so the older survey is not
+in this figure — it has its own, on its own axis.
+
+Horizontal positions are percentages and every vertical dimension is CSS pixels,
+so it reflows on a phone rather than scrolling. The door is one SVG symbol
+placed 28 times; nothing else is SVG. The scale bar sits under the axis rather
+than beside the column note, because two notes anchored to different marks
+cannot be kept clear of each other at every width — an audit across eight
+viewports is what found them colliding between 861 and 1080px, well above the
+breakpoint meant to catch it.
 
 `LeavingHomeLines` wraps `LineChart` for the same post: it picks countries by
 code, cuts every series at the break year and intersects the years so the table

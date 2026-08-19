@@ -1,0 +1,351 @@
+---
+/**
+ * Fifty-five clocks, one per month of the record.
+ *
+ * Each dial is a 24-hour face — midnight at the top, noon at the bottom — and
+ * its hand points at the hour that month was cheapest. One number per clock,
+ * and the answer to the question is the direction the hands are pointing, so
+ * the chart is read before it is explained.
+ *
+ * A month's cheapest hour is comparable to any other month's whatever the price
+ * level was: 2022 cost twice what 2024 did, and neither hand knows it. That is
+ * the whole reason this is the hour and not the price.
+ *
+ * Geometry is trigonometry on a 24-hour dial, computed at build time. Each
+ * clock is its own small SVG in a grid cell, so the grid reflows on a phone and
+ * every dial shrinks with it while the type stays put.
+ */
+import { SERIES } from '../../lib/chart';
+import { POWER, handOf } from '../../lib/power-prices';
+
+const { months, meta } = POWER;
+
+/** viewBox units. The dial is drawn once at this size and scaled by CSS. */
+const C = 20;
+const DIAL = 15.4;
+const HAND = 12.2;
+const TICK = 2.6;
+
+const years = [...new Set(months.map((m) => m.year))].sort((a, b) => a - b);
+const INITIALS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+const NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+const hourLabel = (h: number) =>
+  h === 0 ? 'midnight' : h === 12 ? 'noon' : h < 12 ? `${h}am` : `${h - 12}pm`;
+
+const rows = years.map((year) => ({
+  year,
+  cells: Array.from({ length: 12 }, (_, i) => {
+    const m = months.find((x) => x.year === year && x.month === i + 1);
+    if (!m) return { empty: true as const, month: i + 1 };
+    const [hx, hy] = handOf(m.cheapest, C, HAND);
+    return {
+      empty: false as const,
+      month: i + 1,
+      hand: `${hx.toFixed(2)},${hy.toFixed(2)}`,
+      label: `${NAMES[i]} ${year}: cheapest at ${hourLabel(m.cheapest)}`,
+    };
+  }),
+}));
+
+/** The four quarters of the dial, drawn once at size in the key. */
+const KEY_HOURS = [0, 6, 12, 18];
+const keyMonth = months.find((m) => m.year === 2025 && m.month === 7)!;
+const [kx, ky] = handOf(keyMonth.cheapest, C, HAND);
+
+/** Ticks at the quarters, so a dial is never ambiguous about which way is up. */
+const quarters = KEY_HOURS.map((h) => {
+  const [x1, y1] = handOf(h, C, DIAL);
+  const [x2, y2] = handOf(h, C, DIAL - TICK);
+  return { x1: x1.toFixed(2), y1: y1.toFixed(2), x2: x2.toFixed(2), y2: y2.toFixed(2) };
+});
+---
+
+<figure class="clocks" style={`--hand:${SERIES[0]}`}>
+  <div class="key">
+    <svg class="key-dial" viewBox="0 0 40 40" aria-hidden="true">
+      <circle cx={C} cy={C} r={DIAL} class="dial" />
+      {quarters.map((q) => <line x1={q.x1} y1={q.y1} x2={q.x2} y2={q.y2} class="quarter" />)}
+      <line x1={C} y1={C} x2={kx.toFixed(2)} y2={ky.toFixed(2)} class="hand" />
+      <circle cx={C} cy={C} r="1.7" class="pin" />
+    </svg>
+    <div class="key-words">
+      <p class="key-line mono">
+        <b>Midnight at the top, noon at the bottom.</b>{' '}
+        The hand points at the hour that month was cheapest.
+      </p>
+      <p class="key-eg mono">
+        Drawn here: {`${NAMES[keyMonth.month - 1]} ${keyMonth.year}, cheapest at ${hourLabel(keyMonth.cheapest)}`}
+      </p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="corner"></div>
+    {INITIALS.map((m, i) => <div class="month mono" title={NAMES[i]}>{m}</div>)}
+
+    {
+      rows.map((r) => (
+        <>
+          <div class="year mono">{r.year}</div>
+          {r.cells.map((c) =>
+            c.empty ? (
+              <div class="cell empty" />
+            ) : (
+              <div class="cell">
+                <svg viewBox="0 0 40 40" role="img" aria-label={c.label}>
+                  <circle cx={C} cy={C} r={DIAL} class="dial" />
+                  {quarters.map((q) => (
+                    <line x1={q.x1} y1={q.y1} x2={q.x2} y2={q.y2} class="quarter" />
+                  ))}
+                  <line x1={C} y1={C} x2={c.hand.split(',')[0]} y2={c.hand.split(',')[1]} class="hand" />
+                  <circle cx={C} cy={C} r="1.7" class="pin" />
+                </svg>
+              </div>
+            ),
+          )}
+        </>
+      ))
+    }
+  </div>
+
+  <details class="numbers">
+    <summary class="mono">Show the numbers</summary>
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Cheapest hour</th>
+          <th>Dearest hour</th>
+          <th>Against that month's average</th>
+          <th>Month's average</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          months.map((m) => (
+            <tr>
+              <td>
+                {NAMES[m.month - 1]} {m.year}
+              </td>
+              <td class="mono num">{hourLabel(m.cheapest)}</td>
+              <td class="mono num">{hourLabel(m.dearest)}</td>
+              <td class="mono num">−{Math.round((1 - m.depth) * 100)}%</td>
+              <td class="mono num">
+                {m.mean} {meta.unit}
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </details>
+</figure>
+
+<style>
+  .clocks {
+    --label-col: 42px;
+    margin: 0;
+  }
+
+  /* ---- The key: one dial at a size where its parts can be named ---------- */
+
+  .key {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 0 0 30px;
+  }
+
+  .key-dial {
+    flex: none;
+    width: 78px;
+    height: 78px;
+  }
+
+  .key-line {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    line-height: 1.6;
+    text-transform: none;
+    color: var(--ink-soft);
+    max-width: 52ch;
+  }
+
+  .key-line b {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .key-eg {
+    margin: 6px 0 0;
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    text-transform: none;
+    color: var(--ink-soft);
+  }
+
+  /* ---- The dials --------------------------------------------------------- */
+
+  .dial {
+    fill: none;
+    stroke: rgba(22, 24, 26, 0.18);
+    stroke-width: 1;
+  }
+
+  .quarter {
+    stroke: rgba(22, 24, 26, 0.28);
+    stroke-width: 1;
+  }
+
+  .hand {
+    stroke: var(--hand);
+    stroke-width: 2.6;
+    stroke-linecap: round;
+  }
+
+  .pin {
+    fill: var(--hand);
+  }
+
+  /* ---- The grid ---------------------------------------------------------- */
+
+  .grid {
+    display: grid;
+    grid-template-columns: var(--label-col) repeat(12, 1fr);
+    align-items: center;
+    column-gap: 2px;
+    row-gap: 2px;
+  }
+
+  .month {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-align: center;
+    color: var(--ink-soft);
+    padding-bottom: 6px;
+  }
+
+  .year {
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-align: right;
+    padding-right: 12px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cell svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* Five months before the tariff existed. The gap is the record starting. */
+  .empty {
+    aspect-ratio: 1;
+  }
+
+  /* ---- The numbers ------------------------------------------------------- */
+
+  .numbers {
+    margin-top: 30px;
+  }
+
+  .numbers summary {
+    font-size: 10px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .numbers summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .numbers summary::before {
+    content: '+ ';
+  }
+
+  .numbers[open] summary::before {
+    content: '– ';
+  }
+
+  /* Five columns will not fit a phone. The table scrolls inside itself so the
+     figure above it never has to. */
+  .numbers {
+    overflow-x: auto;
+  }
+
+  .numbers table {
+    width: 100%;
+    margin-top: 14px;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .numbers th {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: left;
+    color: var(--ink-soft);
+    padding: 6px 10px 6px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .numbers td {
+    padding: 5px 10px 5px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .numbers .num {
+    font-size: 11.5px;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 720px) {
+    .clocks {
+      --label-col: 30px;
+    }
+    .key {
+      gap: 14px;
+    }
+    .key-dial {
+      width: 58px;
+      height: 58px;
+    }
+    .year {
+      font-size: 9.5px;
+      padding-right: 6px;
+    }
+    .month {
+      font-size: 8.5px;
+      letter-spacing: 0.02em;
+    }
+    .hand {
+      stroke-width: 3.4;
+    }
+    .quarter {
+      display: none;
+    }
+  }
+</style>

@@ -503,6 +503,12 @@ const span = (which: 'pre' | 'post') =>
     content: '– ';
   }
 
+  /* Five columns will not fit a phone. The table scrolls inside itself so the
+     figure above it never has to. */
+  .numbers {
+    overflow-x: auto;
+  }
+
   .numbers table {
     width: 100%;
     margin-top: 14px;

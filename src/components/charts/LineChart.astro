@@ -80,6 +80,7 @@ const showWash = area && series.length === 1 && zeroBased;
 
 const plotted = series.map((s, i) => {
   const last = s.points[s.points.length - 1]!;
+  const top = y(last.y);
   return {
     name: s.name,
     colour: SERIES[i] ?? SERIES[0],
@@ -87,11 +88,28 @@ const plotted = series.map((s, i) => {
     fill: showWash ? (wash(s.points) ?? '') : '',
     end: {
       left: x(last.x),
-      top: y(last.y),
+      /** The dot stays on the datum, whatever the label has to do. */
+      top,
+      labelTop: top,
       display: formatValue(last.y, { decimals, prefix, suffix }),
     },
   };
 });
+
+/**
+ * Series that finish within a whisker of one another stack their end labels on
+ * top of each other and none of them can be read. The dots stay on their data;
+ * the labels are pushed apart by the least that clears them, in reading order,
+ * and the whole stack slides back inside the plot if it ran off the bottom.
+ */
+const MIN_GAP = (13 / height) * 100;
+const stack = [...plotted].sort((a, b) => a.end.labelTop - b.end.labelTop);
+for (let i = 1; i < stack.length; i++) {
+  const above = stack[i - 1]!.end.labelTop;
+  if (stack[i]!.end.labelTop - above < MIN_GAP) stack[i]!.end.labelTop = above + MIN_GAP;
+}
+const spill = (stack[stack.length - 1]?.end.labelTop ?? 0) - 100;
+if (spill > 0) for (const s of stack) s.end.labelTop -= spill;
 
 const showLegend = series.length > 1;
 const label = series.map((s) => s.name).join(' and ');
@@ -177,7 +195,7 @@ const label = series.map((s) => s.name).join(' and ');
       }
       {
         plotted.map((s) => (
-          <span class="end mono" style={`left:${s.end.left}%;top:${s.end.top}%`}>
+          <span class="end mono" style={`left:${s.end.left}%;top:${s.end.labelTop}%`}>
             {s.end.display}
           </span>
         ))

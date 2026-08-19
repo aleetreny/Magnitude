@@ -10,9 +10,11 @@
     "build": "astro check && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "data": "npm run data:wages && npm run data:leaving-home",
+    "data": "npm run data:wages && npm run data:leaving-home && npm run data:power",
     "data:wages": "node scripts/build-wages.mjs",
-    "data:leaving-home": "node scripts/build-leaving-home.mjs"
+    "data:leaving-home": "node scripts/build-leaving-home.mjs",
+    "data:power": "node scripts/build-power-prices.mjs",
+    "data:power:fetch": "node scripts/fetch-power-prices.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.5",

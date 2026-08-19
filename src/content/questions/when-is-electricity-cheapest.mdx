@@ -1,0 +1,80 @@
+---
+question: When is electricity cheapest?
+answer: Between two and three in the afternoon — in ten months of the year. The small hours, which a generation was taught to use, now cost 31% more than the afternoon does.
+category: energy
+sources:
+  - Red Eléctrica de España
+charts: 2
+readingMinutes: 2
+date: 2026-08-19
+draft: false
+---
+
+import Figure from '../../components/Figure.astro';
+import KeyNumber from '../../components/KeyNumber.astro';
+import Method from '../../components/Method.astro';
+import CheapestHour from '../../components/charts/CheapestHour.astro';
+import DayShape from '../../components/charts/DayShape.astro';
+
+Ask anyone in Spain when to put the washing on and they will say at night. The
+price stopped agreeing three years ago.
+
+<Figure
+  n={1}
+  wide={true}
+  title="Fifty-five months, and the hour each one was cheapest"
+  source="Red Eléctrica de España, apidatos.ree.es · PVPC, the regulated price for small consumers, tolls and charges included · peninsular system · 40,201 hourly prices from June 2021, when the tariff began, to December 2025"
+>
+  <CheapestHour />
+</Figure>
+
+In 2022 five months were cheapest at four in the morning. In 2025 only two are
+— **January and December**, the darkest months of the year. Everywhere else the
+hand has swung to the afternoon.
+
+<Figure
+  n={2}
+  title="The shape of the day, four years apart"
+  source="Red Eléctrica de España, apidatos.ree.es · PVPC · complete calendar years only, so 2021 is not drawn"
+>
+  <DayShape caption="Every hour against its own year's average price. At 1.00× an hour costs what that year cost." />
+</Figure>
+
+And the day is pulling apart. In 2022 the dearest hour cost **1.54 times** the
+cheapest. In 2025 it cost **2.71 times** — 81 € against 220 €.
+
+<KeyNumber
+  value="31%"
+  note="How much more the small hours cost than the afternoon in 2025. In 2021 they cost 10% less. Nothing about the night changed; the middle of the day did."
+/>
+
+The cheapest hour of the day used to be a habit. It has become a forecast.
+
+<Method>
+
+The price is the PVPC — the regulated tariff for small consumers, tolls and
+charges included, which is what appears on the bill of anyone on it. Figures are
+for the peninsular system; the Canaries and the Balearics are priced separately
+and are not in this post.
+
+The series begins on **1 June 2021**, the day the time-of-use PVPC came into
+force. Ask the API for May of that year and it answers with an error, because
+there is no such price to give. Nothing before that date is the same tariff, so
+nothing before it is drawn. The year figures use complete calendar years only,
+which is why 2021 has clocks but no line.
+
+Hours are local clock hours, taken from the offset stamped on each reading —
+the hour people live by rather than the one a server keeps. On the two clock
+changes a year one hour goes missing and one happens twice; both are kept as
+published.
+
+A month's cheapest hour is the hour whose average price that month was lowest.
+Night is 3, 4 and 5 in the morning; afternoon is 2, 3 and 4 in the afternoon.
+Averaging by hour hides what a single day did: this is where the price tends to
+sit, not a promise about tomorrow.
+
+`npm run data:power` refetches the record a month at a time — the API refuses
+longer ranges — into `data/source/`, and rebuilds `src/data/power-prices.json`
+from it. The build refuses to write if any figure quoted in this post has moved.
+
+</Method>

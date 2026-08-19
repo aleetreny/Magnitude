@@ -28,7 +28,8 @@ npm run dev      # http://localhost:4321/Magnitude
 npm run build    # type-checks, then writes dist/
 npm run preview  # serve dist/ exactly as it will be served in production
 npm run data     # rebuild every src/data/*.json from data/source/
-                 # or one at a time: data:wages, data:leaving-home
+                 # one at a time: data:wages, data:leaving-home, data:power
+                 # data:power:fetch re-pulls the price record from the API
 ```
 
 ---
@@ -105,8 +106,8 @@ column below 1200px.
 
 ## Charts
 
-Four components. `BarChart`, `LineChart` and `Doorways` compute their geometry
-with D3 scales at build time and ship no JavaScript at all; `WageShapes` is the
+Five components. `BarChart`, `LineChart`, `Doorways` and `CheapestHour` compute
+their geometry at build time and ship no JavaScript at all; `WageShapes` is the
 one interactive chart on the site.
 
 **`<BarChart>`** — comparing magnitude across named things.
@@ -151,6 +152,11 @@ sizes and the end dots are CSS pixels, so a chart reflows on a phone without
 the labels shrinking with it. A `Show the numbers` table sits under every line
 chart, so no value is reachable only by looking.
 
+End labels are pushed apart when series finish close together: the dots stay on
+their data and only the numbers move, by the least that clears them. Four series
+ending within two hundredths of each other stack into an unreadable smudge
+otherwise.
+
 **`<Doorways>`** — where a set of countries sits on one axis, and how little
 each has moved along it. Reads `src/data/leaving-home.json` and takes an
 optional `highlight` country code. Each row carries two marks and no more: a
@@ -172,9 +178,20 @@ cannot be kept clear of each other at every width — an audit across eight
 viewports is what found them colliding between 861 and 1080px, well above the
 breakpoint meant to catch it.
 
-`LeavingHomeLines` wraps `LineChart` for the same post: it picks countries by
-code, cuts every series at the break year and intersects the years so the table
-under the chart stays aligned row for row.
+**`<CheapestHour>`** — one clock per month, its hand on the hour that month was
+cheapest. Reads `src/data/power-prices.json` and takes no props. A 24-hour dial
+with midnight at the top and noon at the bottom, so the answer to the question
+is the direction the hands point and the grid is read before it is explained.
+The hour is comparable across months whatever the price level was, which is why
+the hand carries the hour and not the price. Each dial is its own small SVG in a
+grid cell: the twelve columns hold at every width and the dials shrink with
+them, down to 22px on a 360px screen, where a hand is still legible.
+
+Two wrappers keep their posts' shaping out of the MDX. `LeavingHomeLines` picks
+countries by code, cuts every series at the break year and intersects the years
+so the table stays aligned row for row. `DayShape` divides each hour by its own
+year's average, because the years being compared are two-to-one apart in price
+and the figure is about shape.
 
 ### Rules the charts follow
 
@@ -260,6 +277,31 @@ A country earns a row only if the older survey covered it at least ten times,
 the newer one at least three, and it reported in the last year available — one
 axis, one year, or the numbers down the right-hand column would not be
 comparable.
+
+---
+
+## The data behind the electricity post
+
+| File | What it is |
+|---|---|
+| `ree-pvpc-hourly.json` | every response the price API gave, one per month, untouched |
+| `scripts/fetch-power-prices.mjs` | pulls the record a month at a time; the endpoint refuses longer ranges |
+| `scripts/build-power-prices.mjs` | reduces 40,201 hourly prices to what the charts draw |
+
+The series is the PVPC, the regulated tariff for small consumers with tolls and
+charges included, for the peninsular system. It begins on **1 June 2021**, the
+day the time-of-use tariff came into force: ask the API for May and it answers
+with an error, because there is no such price. Year figures use complete
+calendar years only.
+
+Hours are local clock hours, taken from the offset the API stamps on each
+reading — the hour people live by. On the two clock changes a year one hour goes
+missing and one happens twice; both are kept as published.
+
+The fetch script never re-asks for a month already on disk, and rewrites the
+file after each one, so a stall costs a single request. The build script
+**refuses to write** if the record is short, if a value is not a plausible
+price, if a year is missing hours, or if any figure the post states has moved.
 
 ---
 

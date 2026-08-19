@@ -28,8 +28,8 @@ npm run dev      # http://localhost:4321/Magnitude
 npm run build    # type-checks, then writes dist/
 npm run preview  # serve dist/ exactly as it will be served in production
 npm run data     # rebuild every src/data/*.json from data/source/
-                 # one at a time: data:wages, data:leaving-home, data:power
-                 # data:power:fetch re-pulls the price record from the API
+                 # one at a time: data:wages, data:leaving-home, data:power, data:bars
+                 # data:power:fetch and data:bars:fetch re-pull from the APIs
 ```
 
 ---
@@ -106,9 +106,9 @@ column below 1200px.
 
 ## Charts
 
-Six components. `BarChart`, `LineChart`, `Doorways`, `CheapestHour` and
-`CheapHours` compute their geometry at build time and ship no JavaScript at all;
-`WageShapes` is the one interactive chart on the site.
+Eight components. `BarChart`, `LineChart`, `Doorways`, `CheapestHour`,
+`CheapHours`, `Queue` and `Closed` compute their geometry at build time and ship
+no JavaScript at all; `WageShapes` is the one interactive chart on the site.
 
 **`<BarChart>`** — comparing magnitude across named things.
 
@@ -193,6 +193,20 @@ day and every column has exactly six, so a column can only say *where* the cheap
 hours were — never how many, never how cheap. Runs of consecutive weeks are
 drawn as one rectangle each, which takes 1,440 marks down to 274 shapes. Same
 orientation as the clocks above it, midnight at the top.
+
+**`<Queue>`** and **`<Closed>`** are unit charts, where the quantity is small
+enough to be counted rather than measured against an axis. `Queue` draws one row
+per year: a dot for every ten people, ending at the glass they share. `Closed`
+draws one mark per thousand premises, the ones that have since shut left as
+outlines at the end, so a fifth reads as a block rather than as a percentage.
+Both round to their unit — that rounding is what makes them countable — and both
+say so in the figure's source line.
+
+Two things learned building them. A unit chart wants to be *narrower* than the
+page: stretched across a wide figure the marks stop being countable and turn
+into wallpaper, so `Closed` caps its field and centres it, and neither figure is
+set `wide`. And a row of dots is more legible on a phone than on a desktop for
+the same reason, which is the opposite of the usual worry.
 
 `LeavingHomeLines` wraps `LineChart` for the housing post: it picks countries by
 code, cuts every series at the break year and intersects the years so the table
@@ -312,6 +326,24 @@ The fetch script never re-asks for a month already on disk, and rewrites the
 file after each one, so a stall costs a single request. The build script
 **refuses to write** if the record is short, if a value is not a plausible
 price, if a year is missing hours, or if any figure the post states has moved.
+
+---
+
+## The data behind the bars post
+
+| File | What it is |
+|---|---|
+| `ine-bars.json` | the INE series responses, untouched: drinking places nationally and by region, and the resident population |
+| `scripts/fetch-bars.mjs` | pulls them; run it again and it refetches |
+| `scripts/build-bars.mjs` | joins them on 1 January and writes `src/data/bars.json` |
+
+A bar is a premises whose main activity the business register files under CNAE
+563, *establecimientos de bebidas*. Not 561, restaurants; not 562, catering.
+
+Both series are read on **1 January** and only years where both exist are used.
+The register reports its stock on that date and the population figure is the
+reading for the same day: dividing premises by a population measured six months
+later would give a different answer for no reason but the calendar.
 
 ---
 

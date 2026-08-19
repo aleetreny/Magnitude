@@ -1,0 +1,198 @@
+---
+/**
+ * How many people share a bar, one row per year.
+ *
+ * Each row is a countable queue: one dot for every ten people, ending at the
+ * glass they are all waiting for. The row is a bar chart whose length can be
+ * checked by counting, which is the point — the quantity is small enough that
+ * nobody has to trust an axis.
+ *
+ * The dots are spaced as a share of the plot, not in pixels, so the longest
+ * queue always ends inside the figure and every row shrinks together on a
+ * phone.
+ */
+import { SERIES } from '../../lib/chart';
+import { BARS } from '../../lib/bars';
+
+const { years, meta } = BARS;
+
+const dotsOf = (perBar: number) => Math.round(perBar / meta.perDot);
+const most = Math.max(...years.map((y) => dotsOf(y.perBar)));
+
+/** One slot per dot, plus one for the glass at the end of the queue. */
+const pitch = 100 / (most + 1.6);
+
+const rows = years.map((y) => {
+  const dots = dotsOf(y.perBar);
+  return {
+    year: y.year,
+    dots: Array.from({ length: dots }, (_, i) => (i * pitch).toFixed(3)),
+    glass: (dots * pitch).toFixed(3),
+    value: Math.round(y.perBar),
+    label: `${y.year}: ${Math.round(y.perBar)} people for every bar`,
+  };
+});
+
+const firstRow = rows[0]!;
+const lastRow = rows[rows.length - 1]!;
+---
+
+<figure class="queue" style={`--glass:${SERIES[0]}`}>
+  <svg width="0" height="0" class="defs" aria-hidden="true" focusable="false">
+    <symbol id="mg-glass" viewBox="0 0 12 18">
+      <path d="M2 1.4 L10 1.4 L8.8 16.9 L3.2 16.9 Z" />
+    </symbol>
+  </svg>
+
+  <p class="what">
+    <span class="item"><span class="dot-mark" aria-hidden="true" /> ten people</span>
+    <span class="item">
+      <svg class="glass-mark" viewBox="0 0 12 18" aria-hidden="true"><use href="#mg-glass" /></svg>
+      one bar
+    </span>
+  </p>
+
+  <div class="rows">
+    {
+      rows.map((r) => (
+        <div class:list={['row', (r.year === firstRow.year || r.year === lastRow.year) && 'edge']}>
+          <span class="year mono">{r.year}</span>
+          <span class="lane" role="img" aria-label={r.label}>
+            {r.dots.map((left) => <span class="dot" style={`left:${left}%`} />)}
+            <svg class="glass" viewBox="0 0 12 18" style={`left:${r.glass}%`} aria-hidden="true">
+              <use href="#mg-glass" />
+            </svg>
+          </span>
+          <span class="value mono">{r.value}</span>
+        </div>
+      ))
+    }
+  </div>
+</figure>
+
+<style>
+  .queue {
+    --year-col: 46px;
+    --value-col: 40px;
+    --row-h: 26px;
+    --glass-w: 12px;
+    margin: 0;
+  }
+
+  .defs {
+    position: absolute;
+  }
+
+  .what {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 28px;
+    margin: 0 0 26px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+
+  .item {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .dot-mark {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(22, 24, 26, 0.42);
+  }
+
+  .glass-mark {
+    width: 11px;
+    height: 17px;
+    fill: var(--glass);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: var(--year-col) 1fr var(--value-col);
+    align-items: center;
+    height: var(--row-h);
+  }
+
+  .year {
+    padding-right: 12px;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    text-align: right;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The first and last year carry the comparison, so they carry the weight. */
+  .edge .year,
+  .edge .value {
+    color: var(--ink);
+  }
+
+  .lane {
+    position: relative;
+    height: var(--row-h);
+  }
+
+  .dot {
+    position: absolute;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    margin-top: -2.5px;
+    border-radius: 50%;
+    background: rgba(22, 24, 26, 0.42);
+  }
+
+  .glass {
+    position: absolute;
+    top: 50%;
+    width: var(--glass-w);
+    height: 18px;
+    margin-top: -9px;
+    fill: var(--glass);
+  }
+
+  .value {
+    padding-left: 10px;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 720px) {
+    .queue {
+      --year-col: 34px;
+      --value-col: 30px;
+      --row-h: 22px;
+      --glass-w: 10px;
+    }
+    .dot,
+    .dot-mark {
+      width: 4px;
+      height: 4px;
+      margin-top: -2px;
+    }
+    .glass {
+      height: 15px;
+      margin-top: -7.5px;
+    }
+    .year,
+    .value {
+      font-size: 9.5px;
+      padding-right: 7px;
+    }
+    .value {
+      padding-left: 6px;
+      padding-right: 0;
+    }
+  }
+</style>

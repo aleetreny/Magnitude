@@ -1,0 +1,123 @@
+---
+/**
+ * Every bar Spain had at the start of the record, one mark to the thousand.
+ *
+ * The marks that are still open are filled; the ones that have closed since are
+ * left as outlines, at the end, so the loss reads as a block rather than as a
+ * percentage. Nobody has to take a share on trust when they can count it.
+ *
+ * A mark is a rounded thousand — the exact counts are in the article and in the
+ * table. Rounding is what makes the field countable at all.
+ */
+import { SERIES } from '../../lib/chart';
+import { BARS } from '../../lib/bars';
+
+const { summary, years } = BARS;
+
+const COLUMNS = 29;
+const open = summary.marks - summary.marksClosed;
+const marks = Array.from({ length: summary.marks }, (_, i) => ({ open: i < open }));
+
+const first = years[0]!;
+const last = years[years.length - 1]!;
+---
+
+<figure class="closed" style={`--glass:${SERIES[0]}`}>
+  <svg width="0" height="0" class="defs" aria-hidden="true" focusable="false">
+    <symbol id="mg-glass-2" viewBox="0 0 12 18">
+      <path d="M2 1.4 L10 1.4 L8.8 16.9 L3.2 16.9 Z" />
+    </symbol>
+  </svg>
+
+  <p class="what">
+    <span class="item">
+      <svg class="mark solid" viewBox="0 0 12 18" aria-hidden="true"><use href="#mg-glass-2" /></svg>
+      a thousand bars still open
+    </span>
+    <span class="item">
+      <svg class="mark ghost" viewBox="0 0 12 18" aria-hidden="true"><use href="#mg-glass-2" /></svg>
+      a thousand that have closed
+    </span>
+  </p>
+
+  <div
+    class="field"
+    style={`--cols:${COLUMNS}`}
+    role="img"
+    aria-label={`Spain had ${first.bars.toLocaleString('en-GB')} bars in ${first.year} and ${last.bars.toLocaleString('en-GB')} in ${last.year}. Of ${summary.marks} marks, one to the thousand, ${summary.marksClosed} are drawn as closed.`}
+  >
+    {
+      marks.map((m) => (
+        <svg class:list={['mark', m.open ? 'solid' : 'ghost']} viewBox="0 0 12 18" aria-hidden="true">
+          <use href="#mg-glass-2" />
+        </svg>
+      ))
+    }
+  </div>
+</figure>
+
+<style>
+  .closed {
+    margin: 0;
+  }
+
+  .defs {
+    position: absolute;
+  }
+
+  .what {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 28px;
+    margin: 0 0 26px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+
+  .item {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  /* 203 marks land exactly on 29 columns by 7 rows, so the field has no ragged
+     last row. Capping its width keeps a mark the size of a mark: stretched
+     across a wide figure they stop being countable and become wallpaper. */
+  .field {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), 1fr);
+    gap: 5px 4px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .mark {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .what .mark {
+    width: 11px;
+    height: 17px;
+    flex: none;
+  }
+
+  .solid {
+    fill: var(--glass);
+  }
+
+  .ghost {
+    fill: none;
+    stroke: rgba(22, 24, 26, 0.3);
+    stroke-width: 1;
+  }
+
+  @media (max-width: 720px) {
+    .field {
+      gap: 3px 2px;
+    }
+  }
+</style>

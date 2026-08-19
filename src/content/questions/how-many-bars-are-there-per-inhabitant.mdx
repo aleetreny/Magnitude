@@ -1,0 +1,72 @@
+---
+question: How many bars are there per inhabitant?
+answer: One for every 301 people. In 2010 there was one for every 229 — Spain has lost 39,261 bars since, and gained three million inhabitants.
+category: food
+sources:
+  - Instituto Nacional de Estadística
+charts: 2
+readingMinutes: 2
+date: 2026-08-19
+draft: false
+---
+
+import Figure from '../../components/Figure.astro';
+import KeyNumber from '../../components/KeyNumber.astro';
+import Method from '../../components/Method.astro';
+import Queue from '../../components/charts/Queue.astro';
+import Closed from '../../components/charts/Closed.astro';
+
+The country with a bar on every corner has been quietly running out of corners.
+
+<Figure
+  n={1}
+  title="How many people share a bar, year by year"
+  source="Instituto Nacional de Estadística · DIRCE, premises whose main activity is CNAE 563, drinking places · population on 1 January, Estadística Continua de Población · one dot to ten people, rounded"
+>
+  <Queue />
+</Figure>
+
+Fifteen comparisons, and the queue got longer in fourteen of them.
+
+<Figure
+  n={2}
+  title="Every bar Spain had in 2010, one mark to the thousand"
+  source="Instituto Nacional de Estadística · DIRCE, premises whose main activity is CNAE 563 · marks are rounded thousands; the exact counts are 202,720 in 2010 and 163,459 in 2025"
+>
+  <Closed />
+</Figure>
+
+One in five is gone. That is **7.2 a day**, every day, for fifteen years.
+
+<KeyNumber
+  value="−29%"
+  note="Madrid, the region that lost the most. Navarre lost 5%."
+/>
+
+The emptying is not where the emptying was supposed to be.
+
+<Method>
+
+A bar here is a premises whose main activity the business register files under
+CNAE 563, *establecimientos de bebidas* — drinking places. Not restaurants,
+which are 561, and not catering, which is 562. The register counts premises, so
+a bar that changes hands and keeps trading is not a closure, and one that shuts
+and reopens as a restaurant is.
+
+Both series are read on **1 January**: the register reports its stock on that
+date, and the population figure is the reading for the same day. Dividing a
+stock of premises by a population measured six months later would give a
+different answer for no reason but the calendar.
+
+The 7.2 a day is a net figure across fifteen years — closures minus openings,
+divided by the days between the two readings. It is not a count of shutters
+coming down.
+
+Marks on the second figure are rounded thousands, which is what makes them
+countable. The exact counts are in the article and the change by region is in
+the data behind it.
+
+`npm run data:bars` rebuilds `src/data/bars.json` from the raw API responses
+kept in `data/source/`. It refuses to write if any figure quoted here has moved.
+
+</Method>

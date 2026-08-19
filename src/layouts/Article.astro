@@ -155,7 +155,7 @@ const stamp = date.toISOString().slice(0, 10);
   .veil {
     position: fixed;
     inset: 0 0 auto;
-    height: 104px;
+    height: 78px;
     z-index: 4;
     pointer-events: none;
     /* Off at rest. The header sits inside this strip, and a boundary that
@@ -187,23 +187,27 @@ const stamp = date.toISOString().slice(0, 10);
   .veil-blur {
     -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
-    /* Eased, not linear: a straight ramp shows the exact line where the blur
-       begins, which is the floating-line problem in another form. */
+    /* Nothing at all across the lower half of the strip: type stays completely
+       sharp until it is close to the edge, and only then goes. Eased rather
+       than linear even so — a straight ramp shows the exact line where the
+       blur begins, which is the floating-line problem in another form. */
     -webkit-mask-image: linear-gradient(
       to top,
       transparent 0%,
-      rgb(0 0 0 / 0.22) 26%,
-      rgb(0 0 0 / 0.62) 50%,
-      rgb(0 0 0 / 0.9) 72%,
-      #000 88%
+      transparent 42%,
+      rgb(0 0 0 / 0.14) 55%,
+      rgb(0 0 0 / 0.5) 70%,
+      rgb(0 0 0 / 0.86) 84%,
+      #000 95%
     );
     mask-image: linear-gradient(
       to top,
       transparent 0%,
-      rgb(0 0 0 / 0.22) 26%,
-      rgb(0 0 0 / 0.62) 50%,
-      rgb(0 0 0 / 0.9) 72%,
-      #000 88%
+      transparent 42%,
+      rgb(0 0 0 / 0.14) 55%,
+      rgb(0 0 0 / 0.5) 70%,
+      rgb(0 0 0 / 0.86) 84%,
+      #000 95%
     );
   }
 
@@ -211,16 +215,17 @@ const stamp = date.toISOString().slice(0, 10);
     background: linear-gradient(
       to top,
       rgb(var(--paper-rgb) / 0) 0%,
-      rgb(var(--paper-rgb) / 0.18) 30%,
-      rgb(var(--paper-rgb) / 0.6) 60%,
-      rgb(var(--paper-rgb) / 0.96) 90%
+      rgb(var(--paper-rgb) / 0) 44%,
+      rgb(var(--paper-rgb) / 0.1) 58%,
+      rgb(var(--paper-rgb) / 0.42) 74%,
+      rgb(var(--paper-rgb) / 0.93) 94%
     );
   }
 
   /* Nothing to cross if the page does not move. */
   @media (prefers-reduced-motion: reduce) {
     .veil {
-      height: 56px;
+      height: 44px;
     }
     .veil-blur {
       display: none;

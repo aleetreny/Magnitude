@@ -16,9 +16,6 @@ export interface Month {
 export interface Year {
   year: number;
   mean: number;
-  /** Each hour against the year's own average: the shape of the day. */
-  shape: number[];
-  hours: number[];
   cheapest: { hour: number; price: number };
   dearest: { hour: number; price: number };
   ratio: number;
@@ -60,6 +57,14 @@ export interface PowerPrices {
   };
   months: Month[];
   years: Year[];
+  /** The six cheapest hours of each day, gathered into weeks. */
+  cheapHours: {
+    cheapestN: number;
+    days: number;
+    weekStarts: string[];
+    /** Per hour, runs of consecutive weeks drawn as one rectangle each. */
+    band: [number, number][][];
+  };
 }
 
 export const POWER = raw as PowerPrices;

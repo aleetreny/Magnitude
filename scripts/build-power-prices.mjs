@@ -108,9 +108,6 @@ const years = FULL_YEARS.map((year) => {
   return {
     year,
     mean: +avg.toFixed(1),
-    /** Each hour against the year's own average: the shape of the day. */
-    shape: hours.map((v) => +(v / avg).toFixed(3)),
-    hours: hours.map((v) => +v.toFixed(1)),
     cheapest: { hour: low, price: +hours[low].toFixed(1) },
     dearest: { hour: high, price: +hours[high].toFixed(1) },
     /** How far apart the cheapest hour and the dearest one stand. */
@@ -122,6 +119,73 @@ const years = FULL_YEARS.map((year) => {
 for (const y of years) {
   if (y.n < 8600) throw new Error(`${y.year} has only ${y.n} hours — not a full year`);
 }
+
+// ---- The six cheapest hours of every day, gathered into weeks ---------------
+
+/**
+ * A quarter of the day. Six hours is what somebody with a washing machine and a
+ * dishwasher is actually choosing between, and holding the count fixed means
+ * every column carries exactly the same amount of ink: the eye reads where the
+ * cheap hours are and nothing else.
+ */
+const CHEAPEST_N = 6;
+
+const byDay = new Map();
+for (const m of raw.months) {
+  for (const series of m.body.included) {
+    if (!/pvpc/i.test(series.attributes.title)) continue;
+    for (const v of series.attributes.values) {
+      const day = v.datetime.slice(0, 10);
+      if (!byDay.has(day)) byDay.set(day, []);
+      byDay.get(day).push({ hour: +v.datetime.slice(11, 13), value: v.value });
+    }
+  }
+}
+
+const days = [...byDay.keys()].sort();
+for (let i = 1; i < days.length; i++) {
+  const step = (Date.parse(days[i]) - Date.parse(days[i - 1])) / 86_400_000;
+  if (step !== 1) throw new Error(`the record jumps from ${days[i - 1]} to ${days[i]}`);
+}
+
+const weeks = [];
+for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
+
+/**
+ * The six cheapest hours of the average day of each week. Ranking the week's
+ * mean day rather than counting how often an hour made a daily list gives every
+ * column exactly six marks, so a column can only say where — never how much.
+ */
+const cheapestOf = weeks.map((w) => {
+  const hours = profile(w.flatMap((d) => byDay.get(d).map((r) => ({ hour: r.hour, value: r.value }))));
+  return new Set(
+    hours
+      .map((v, hour) => ({ hour, v }))
+      .filter((p) => p.v != null)
+      .sort((a, b) => a.v - b.v)
+      .slice(0, CHEAPEST_N)
+      .map((p) => p.hour),
+  );
+});
+
+/**
+ * Runs of consecutive weeks, one list per hour. Drawing a rectangle per run
+ * rather than per cell takes 1,440 marks down to a few hundred shapes.
+ */
+const band = Array.from({ length: 24 }, (_, hour) => {
+  const on = cheapestOf.map((six) => six.has(hour));
+  const runs = [];
+  let start = -1;
+  on.forEach((v, i) => {
+    if (v && start < 0) start = i;
+    if (!v && start >= 0) {
+      runs.push([start, i - 1]);
+      start = -1;
+    }
+  });
+  if (start >= 0) runs.push([start, on.length - 1]);
+  return runs;
+});
 
 // ---- Night against afternoon, year by year ---------------------------------
 
@@ -179,6 +243,11 @@ const QUOTED = [
   ['night months in 2025', summary.monthsInLastYear - summary.afternoonLast, 2],
   ['months of record', summary.monthsCovered, 55],
   ['hourly readings', summary.observations, 40201],
+  ['days of record', days.length, 1675],
+  ['weeks drawn', weeks.length, 240],
+  ['marks on the field', band.flat().length && CHEAPEST_N * weeks.length, 1440],
+  // 7pm to 10pm never makes the list — the one flat statement the field makes.
+  ['weeks with a cheap hour from 7 to 10pm', [19, 20, 21, 22].reduce((n, h) => n + band[h].length, 0), 0],
 ];
 
 for (const [what, found, stated] of QUOTED) {
@@ -205,6 +274,13 @@ const out = {
   summary,
   months,
   years,
+  cheapHours: {
+    cheapestN: CHEAPEST_N,
+    days: days.length,
+    /** First day of each week, so the axis can find where a year turns. */
+    weekStarts: weeks.map((w) => w[0]),
+    band,
+  },
 };
 
 writeFileSync(OUT, JSON.stringify(out));

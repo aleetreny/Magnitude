@@ -76,21 +76,17 @@ const quarters = KEY_HOURS.map((h) => {
 
 <figure class="clocks" style={`--hand:${SERIES[0]}`}>
   <div class="key">
-    <svg class="key-dial" viewBox="0 0 40 40" aria-hidden="true">
+    <span class="key-face">
+      <span class="face-top mono">midnight</span>
+      <svg class="key-dial" viewBox="0 0 40 40" aria-hidden="true">
       <circle cx={C} cy={C} r={DIAL} class="dial" />
       {quarters.map((q) => <line x1={q.x1} y1={q.y1} x2={q.x2} y2={q.y2} class="quarter" />)}
       <line x1={C} y1={C} x2={kx.toFixed(2)} y2={ky.toFixed(2)} class="hand" />
-      <circle cx={C} cy={C} r="1.7" class="pin" />
-    </svg>
-    <div class="key-words">
-      <p class="key-line mono">
-        <b>Midnight at the top, noon at the bottom.</b>{' '}
-        The hand points at the hour that month was cheapest.
-      </p>
-      <p class="key-eg mono">
-        Drawn here: {`${NAMES[keyMonth.month - 1]} ${keyMonth.year}, cheapest at ${hourLabel(keyMonth.cheapest)}`}
-      </p>
-    </div>
+        <circle cx={C} cy={C} r="1.7" class="pin" />
+      </svg>
+      <span class="face-bottom mono">noon</span>
+    </span>
+    <p class="key-line mono">the hand marks the cheapest hour</p>
   </div>
 
   <div class="grid">
@@ -166,8 +162,23 @@ const quarters = KEY_HOURS.map((h) => {
   .key {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 18px;
     margin: 0 0 30px;
+  }
+
+  /* The two words that orient a dial, set on the dial itself. */
+  .key-face {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .face-top,
+  .face-bottom {
+    font-size: 8.5px;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
   }
 
   .key-dial {
@@ -179,22 +190,7 @@ const quarters = KEY_HOURS.map((h) => {
   .key-line {
     margin: 0;
     font-size: 11px;
-    letter-spacing: 0.04em;
-    line-height: 1.6;
-    text-transform: none;
-    color: var(--ink-soft);
-    max-width: 52ch;
-  }
-
-  .key-line b {
-    font-weight: 500;
-    color: var(--ink);
-  }
-
-  .key-eg {
-    margin: 6px 0 0;
-    font-size: 9.5px;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: none;
     color: var(--ink-soft);
   }

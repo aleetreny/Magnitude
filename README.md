@@ -106,9 +106,9 @@ column below 1200px.
 
 ## Charts
 
-Five components. `BarChart`, `LineChart`, `Doorways` and `CheapestHour` compute
-their geometry at build time and ship no JavaScript at all; `WageShapes` is the
-one interactive chart on the site.
+Six components. `BarChart`, `LineChart`, `Doorways`, `CheapestHour` and
+`CheapHours` compute their geometry at build time and ship no JavaScript at all;
+`WageShapes` is the one interactive chart on the site.
 
 **`<BarChart>`** — comparing magnitude across named things.
 
@@ -187,11 +187,16 @@ the hand carries the hour and not the price. Each dial is its own small SVG in a
 grid cell: the twelve columns hold at every width and the dials shrink with
 them, down to 22px on a 360px screen, where a hand is still legible.
 
-Two wrappers keep their posts' shaping out of the MDX. `LeavingHomeLines` picks
-countries by code, cuts every series at the break year and intersects the years
-so the table stays aligned row for row. `DayShape` divides each hour by its own
-year's average, because the years being compared are two-to-one apart in price
-and the figure is about shape.
+**`<CheapHours>`** — 240 weeks across, 24 hours down, and a mark where that hour
+was among the six cheapest of the average day that week. Six is a quarter of the
+day and every column has exactly six, so a column can only say *where* the cheap
+hours were — never how many, never how cheap. Runs of consecutive weeks are
+drawn as one rectangle each, which takes 1,440 marks down to 274 shapes. Same
+orientation as the clocks above it, midnight at the top.
+
+`LeavingHomeLines` wraps `LineChart` for the housing post: it picks countries by
+code, cuts every series at the break year and intersects the years so the table
+stays aligned row for row.
 
 ### Rules the charts follow
 
@@ -287,6 +292,11 @@ comparable.
 | `ree-pvpc-hourly.json` | every response the price API gave, one per month, untouched |
 | `scripts/fetch-power-prices.mjs` | pulls the record a month at a time; the endpoint refuses longer ranges |
 | `scripts/build-power-prices.mjs` | reduces 40,201 hourly prices to what the charts draw |
+
+The two figures ask different things of the same record. The clocks want one
+number per month — the cheapest hour — because a single hour is comparable
+across months whatever the price level did. The field wants the cheapest six
+hours of each week's average day, ranked within that week for the same reason.
 
 The series is the PVPC, the regulated tariff for small consumers with tolls and
 charges included, for the peninsular system. It begins on **1 June 2021**, the

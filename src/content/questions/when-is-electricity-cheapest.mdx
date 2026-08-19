@@ -14,7 +14,7 @@ import Figure from '../../components/Figure.astro';
 import KeyNumber from '../../components/KeyNumber.astro';
 import Method from '../../components/Method.astro';
 import CheapestHour from '../../components/charts/CheapestHour.astro';
-import DayShape from '../../components/charts/DayShape.astro';
+import CheapHours from '../../components/charts/CheapHours.astro';
 
 Ask anyone in Spain when to put the washing on and they will say at night. The
 price stopped agreeing three years ago.
@@ -34,18 +34,23 @@ hand has swung to the afternoon.
 
 <Figure
   n={2}
-  title="The shape of the day, four years apart"
-  source="Red Eléctrica de España, apidatos.ree.es · PVPC · complete calendar years only, so 2021 is not drawn"
+  wide={true}
+  title="Two hundred and forty weeks, and where the cheap hours sat"
+  source="Red Eléctrica de España, apidatos.ree.es · PVPC · the six cheapest hours of the average day of each week, across the 1,675 days of the record"
 >
-  <DayShape caption="Every hour against its own year's average price. At 1.00× an hour costs what that year cost." />
+  <CheapHours />
 </Figure>
 
-And the day is pulling apart. In 2022 the dearest hour cost **1.54 times** the
-cheapest. In 2025 it cost **2.71 times** — 81 € against 220 €.
+The day has two cheap windows now. The one before dawn is thinning. The one
+after lunch shuts every winter and comes back wider. And between seven and ten
+at night, not one cheap hour in four and a half years.
+
+And they are pulling apart. The dearest hour cost **1.54 times** the cheapest in
+2022, and **2.71 times** in 2025 — 81 € against 220 €.
 
 <KeyNumber
   value="31%"
-  note="How much more the small hours cost than the afternoon in 2025. In 2021 they cost 10% less. Nothing about the night changed; the middle of the day did."
+  note="What the small hours cost over the afternoon in 2025. In 2021 they were 10% cheaper."
 />
 
 The cheapest hour of the day used to be a habit. It has become a forecast.

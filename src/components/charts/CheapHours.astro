@@ -1,0 +1,200 @@
+---
+/**
+ * Every week of the record, and where its cheap hours sat.
+ *
+ * A mark means that hour was among the six cheapest of the average day that
+ * week. Six is a quarter of the day and every column has exactly six, so a
+ * column can only say where the cheap hours were, never how many or how cheap.
+ *
+ * Midnight is at the top and noon in the middle, the same way round as the
+ * clocks above, so a hand pointing down and a mark sitting low mean the hour.
+ *
+ * Geometry is a D3 band scale over the weeks and a linear scale down the hours,
+ * resolved at build time. Runs of consecutive weeks are drawn as one rectangle
+ * each, which takes 1,440 marks down to a few hundred shapes.
+ */
+import { scaleBand, scaleLinear } from 'd3-scale';
+import { SERIES } from '../../lib/chart';
+import { POWER } from '../../lib/power-prices';
+
+const { cheapHours, meta } = POWER;
+const { band, weekStarts } = cheapHours;
+
+/** viewBox units. Width is one unit per week, so a run is its own width. */
+const W = weekStarts.length;
+const H = 24;
+
+const x = scaleBand<number>()
+  .domain(weekStarts.map((_, i) => i))
+  .range([0, W])
+  .paddingInner(0.05);
+const y = scaleLinear().domain([0, H]).range([0, H]);
+
+const cells = band.flatMap((runs, hour) =>
+  runs.map(([from, to]) => ({
+    x: (x(from) ?? 0).toFixed(3),
+    width: ((x(to) ?? 0) + x.bandwidth() - (x(from) ?? 0)).toFixed(3),
+    y: (y(hour) + 0.08).toFixed(3),
+    hour,
+  })),
+);
+
+/** Where each year turns, for the marks under the field. */
+const yearStarts = weekStarts
+  .map((d, i) => ({ year: +d.slice(0, 4), i }))
+  .filter((v, i, all) => i === 0 || v.year !== all[i - 1]!.year)
+  .map((v) => ({ ...v, at: ((x(v.i) ?? 0) / W) * 100 }));
+
+const HOUR_MARKS = [0, 6, 12, 18, 23];
+const hourLabel = (h: number) =>
+  h === 0 ? 'midnight' : h === 12 ? 'noon' : h < 12 ? `${h}am` : `${h - 12}pm`;
+
+/** Labels and rules sit on the middle of their hour, not on its top edge. */
+const rows = HOUR_MARKS.map((h) => ({ label: hourLabel(h), at: ((y(h) + 0.5) / H) * 100 }));
+
+const reading =
+  `The six cheapest hours of the average day, week by week, from ${weekStarts[0]} to the ` +
+  `end of ${meta.to.slice(0, 4)}. They sit before dawn at the start of the record and in ` +
+  `the early afternoon by the end, returning to the night each winter. No hour from ` +
+  `seven to ten at night is among them in any week of the record.`;
+---
+
+<figure class="cheap" style={`--mark:${SERIES[0]}`}>
+  <p class="what">
+    <span class="swatch" aria-hidden="true"></span>
+    one of the week's six cheapest hours
+  </p>
+
+  <div class="plot">
+    <div class="field">
+      <div class="ticks" aria-hidden="true">
+        {rows.map((r) => <span class="hline" style={`top:${r.at}%`} />)}
+      </div>
+
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio="none"
+        role="img"
+        aria-label={reading}
+      >
+        {cells.map((c) => <rect x={c.x} y={c.y} width={c.width} height="0.84" />)}
+      </svg>
+
+      <div class="hours" aria-hidden="true">
+        {rows.map((r) => <span class="hour mono" style={`top:${r.at}%`}>{r.label}</span>)}
+      </div>
+    </div>
+
+    <div class="years" aria-hidden="true">
+      {yearStarts.map((v) => <span class="year mono" style={`left:${v.at}%`}>{v.year}</span>)}
+    </div>
+  </div>
+</figure>
+
+<style>
+  .cheap {
+    --hour-col: 70px;
+    margin: 0;
+  }
+
+  .what {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0 0 22px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+
+  .swatch {
+    width: 16px;
+    height: 11px;
+    background: var(--mark);
+  }
+
+  .plot {
+    position: relative;
+  }
+
+  .field {
+    position: relative;
+    height: 300px;
+    margin-left: var(--hour-col);
+  }
+
+  .field svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .field rect {
+    fill: var(--mark);
+  }
+
+  .ticks {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .hline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--rule);
+    opacity: 0.6;
+  }
+
+  .hours {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .hour {
+    position: absolute;
+    left: 0;
+    transform: translate(calc(-100% - 12px), -0.5em);
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+
+  .years {
+    position: relative;
+    height: 24px;
+    margin-left: var(--hour-col);
+    border-top: 1px solid var(--rule);
+  }
+
+  .year {
+    position: absolute;
+    top: 7px;
+    padding-left: 5px;
+    border-left: 1px solid var(--rule);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 720px) {
+    .cheap {
+      --hour-col: 52px;
+    }
+    .field {
+      height: 220px;
+    }
+    .hour {
+      font-size: 8.5px;
+      transform: translate(calc(-100% - 7px), -0.5em);
+    }
+  }
+</style>

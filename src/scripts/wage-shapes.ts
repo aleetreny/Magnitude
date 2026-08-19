@@ -359,7 +359,11 @@ export function initWageShapes(root: HTMLElement) {
     if (layout === 'wave') {
       const p = placed[0]!;
       const x = at(p);
-      const rule = gRule.selectAll<SVGLineElement, number>('line').data([x]);
+      // Direct children only, and clear the other layout's nodes first. A bare
+      // `selectAll('line')` reaches into the grid's groups and binds one datum
+      // across ninety-eight cased lines.
+      gRule.selectAll(':scope > g').remove();
+      const rule = gRule.selectAll<SVGLineElement, number>(':scope > line').data([x]);
       rule
         .enter()
         .append('line')
@@ -377,19 +381,27 @@ export function initWageShapes(root: HTMLElement) {
       return;
     }
     gRule.selectAll('text').remove();
-    const rules = gRule.selectAll<SVGLineElement, Placed>('line').data(placed, (p) => p.id);
+    // One by one, the rule has to cross the silhouette rather than sit under
+    // it. A 10px stub of a 1-on-5 dash is literally two dots, and two dots at
+    // 42% over an engraved fill is nothing. Full cell height, and cased in
+    // paper so it survives the hatch it runs through.
+    gRule.selectAll(':scope > line').remove();
+    const rules = gRule.selectAll<SVGGElement, Placed>(':scope > g').data(placed, (p) => p.id);
     rules.exit().remove();
-    rules
-      .enter()
-      .append('line')
-      .attr('class', 'ws-median')
-      .merge(rules)
-      .transition()
-      .duration(dur())
-      .attr('x1', at)
-      .attr('x2', at)
-      .attr('y1', (p) => p.y + p.h)
-      .attr('y2', (p) => p.y + p.h - 10);
+    const enter = rules.enter().append('g');
+    enter.append('line').attr('class', 'ws-median-case');
+    enter.append('line').attr('class', 'ws-median');
+    const all = enter.merge(rules);
+    for (const cls of ['.ws-median-case', '.ws-median'] as const) {
+      all
+        .select<SVGLineElement>(cls)
+        .transition()
+        .duration(dur())
+        .attr('x1', at)
+        .attr('x2', at)
+        .attr('y1', (p) => p.y + p.h)
+        .attr('y2', (p) => p.y + 1);
+    }
   }
 
   function updateReadout(placed: Placed[]) {

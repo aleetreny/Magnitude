@@ -438,12 +438,25 @@ const still = (ys: [number, number][], row: number) => {
     stroke-width: 2;
   }
 
+  /* Denser and darker than it was in both layouts: at 1-on-5 and 42% the rule
+     read as a scatter of dots rather than a line. */
   .ws .ws-median {
     stroke: var(--ink);
     stroke-width: 1;
-    stroke-opacity: 0.42;
-    stroke-dasharray: 1 5;
+    stroke-opacity: 0.62;
+    stroke-dasharray: 1.5 3.5;
     shape-rendering: crispEdges;
+    pointer-events: none;
+  }
+
+  /* A channel of paper under the rule, so the dashes keep their contrast where
+     they cross a silhouette. Drawn only in the grid — the script gives the wave
+     a bare line, because there the ridges overlap so densely that a channel
+     would carve a visible gap through all forty-nine of them. */
+  .ws .ws-median-case {
+    stroke: var(--paper);
+    stroke-width: 3.5;
+    stroke-opacity: 0.85;
     pointer-events: none;
   }
 

@@ -1,0 +1,64 @@
+---
+/**
+ * Four countries, drawn only inside the survey that ran from 2000 to 2020.
+ *
+ * The point of the figure is how flat each line is next to the distance
+ * between them, so it stops at the break rather than stepping over it. The
+ * years are intersected across the countries chosen, which keeps the table
+ * under the chart aligned row for row.
+ */
+import LineChart from './LineChart.astro';
+import { LEAVING_HOME } from '../../lib/leaving-home';
+
+interface Props {
+  /** Eurostat geo codes, in the order the palette should assign. */
+  codes?: string[];
+  caption?: string;
+}
+
+const { codes = ['ES', 'EL', 'DE', 'NL'], caption } = Astro.props;
+
+const chosen = codes.map((code) => {
+  const found = LEAVING_HOME.countries.find((c) => c.code === code);
+  if (!found) throw new Error(`no country ${code} in the dataset`);
+  return found;
+});
+
+const before = (c: (typeof chosen)[number]) =>
+  c.series.filter((p) => p.year < LEAVING_HOME.meta.breakYear);
+
+const years = chosen
+  .map((c) => before(c).map((p) => p.year))
+  .reduce((a, b) => a.filter((y) => b.includes(y)))
+  .sort((a, b) => a - b);
+
+const series = chosen.map((c) => {
+  const byYear = new Map(before(c).map((p) => [p.year, p.value]));
+  return {
+    name: c.label,
+    points: years.map((y) => ({ x: y, y: byYear.get(y)! })),
+  };
+});
+
+const values = series.flatMap((s) => s.points.map((p) => p.y));
+const yLo = Math.floor(Math.min(...values) - 0.6);
+const yHi = Math.ceil(Math.max(...values) + 0.6);
+
+const yTicks: { value: number; label: string }[] = [];
+for (let v = Math.ceil(yLo / 2) * 2; v <= yHi; v += 2) yTicks.push({ value: v, label: String(v) });
+
+const xTicks = years
+  .filter((y) => y % 5 === 0 || y === years[years.length - 1])
+  .map((y) => ({ value: y, label: String(y) }));
+---
+
+<LineChart
+  series={series}
+  xTicks={xTicks}
+  yTicks={yTicks}
+  yDomain={[yLo, yHi]}
+  xLabel="Year"
+  caption={caption}
+  decimals={1}
+  height={300}
+/>

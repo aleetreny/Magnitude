@@ -1,0 +1,91 @@
+---
+question: Has the age of leaving home shifted across Europe?
+answer: Hardly anywhere. In the survey that ran to 2020, the median country's whole range of readings is 1.6 years — while the distance between the earliest country in Europe and the latest is 10.2. Where you were born decides it, not when.
+category: housing
+sources:
+  - Eurostat
+  - EU Labour Force Survey
+charts: 2
+readingMinutes: 3
+date: 2026-08-18
+draft: false
+---
+
+import Figure from '../../components/Figure.astro';
+import KeyNumber from '../../components/KeyNumber.astro';
+import Method from '../../components/Method.astro';
+import Doorways from '../../components/charts/Doorways.astro';
+import LeavingHomeLines from '../../components/charts/LeavingHomeLines.astro';
+
+Every country in Europe has a door, and each one opens at a different age. What
+almost none of them have is a door that moves.
+
+<Figure
+  n={1}
+  wide={true}
+  title="Twenty-eight countries on one axis of age, and everything two surveys ever said about them"
+  source="Eurostat, EU Labour Force Survey, dataset yth_demo_030 · both sexes · the estimated age at which half of a cohort no longer lives with a parent · Eurostat flags a break in series in 2021, so the two lanes are two surveys and are never subtracted from one another"
+>
+  <Doorways caption="Each door stands at the age where the current survey puts that country in 2025. The bands behind it hold every reading each survey took." />
+</Figure>
+
+In the survey that ran to 2020, the median country's whole range — its highest
+reading minus its lowest — is **1.6 years**. Germany's is 0.4: every reading
+from 2000 to 2020 landed between 23.7 and 24.1.
+
+Across the same axis, Finland's door sits at 21.3 and Croatia's at 31.5. The
+distance between two countries is more than six times everything a quarter
+century did inside one.
+
+<Figure
+  n={2}
+  title="Four countries, one survey, twenty-one years"
+  source="Eurostat, EU Labour Force Survey, dataset yth_demo_030 · both sexes · drawn only to 2020, where the definition changes"
+>
+  <LeavingHomeLines
+    codes={['ES', 'HU', 'DE', 'EE']}
+    caption="The estimated age at which half of a cohort no longer lives with a parent, 2000–2020."
+  />
+</Figure>
+
+Spain is at 30.2, and it has been at the late end for as long as the survey has
+run: from 2000 to 2020 it never once left 28.3 to 29.8.
+
+<KeyNumber
+  value="4.5 years"
+  note="The largest one-year move anywhere in the European record: Sweden, 2021 — the year the survey changed its own definition. Nothing anybody actually did has ever moved a country that far."
+/>
+
+The age of leaving home reads like a fact about a generation. It behaves like a
+fact about a country.
+
+<Method>
+
+Eurostat publishes this as an estimate, not a count: the age at which 50% of a
+cohort no longer lives in a household with a parent, derived from the EU Labour
+Force Survey. Figures are for both sexes and are the ones Eurostat published on
+16 April 2026; nothing here is modelled on top of them.
+
+Eurostat flags a **break in series** in 2021 — the labour force survey was
+redefined — for 34 of the 36 territories in the dataset. A reading from 2020 and
+one from 2021 are therefore not the same measurement, and no figure in this post
+is a difference across that year. Every range quoted lies inside one survey, and
+the chart draws the two surveys in separate lanes for the same reason.
+
+A country appears if the older survey covered it at least ten times, the newer
+one at least three, and it reported in the last year available. That drops the
+United Kingdom, whose series ends in 2019, and Türkiye, whose series ends in
+2024. Coverage of the older survey varies between 11 and 21 readings, so a
+country's band is as wide as its own record, not as wide as the same span of
+years everywhere.
+
+Two of the bands are wide because a survey wobbled rather than because a country
+did. Sweden's older readings fall steeply in the three years before the break, to
+17.5; Portugal's first reading under the new survey is 33.3, and the next year's
+is 30.1. Both are Eurostat's published figures and are drawn as published.
+
+`npm run data:leaving-home` rebuilds `src/data/leaving-home.json` from the raw
+API response kept in `data/source/`. It refuses to write if any figure quoted in
+this post has moved.
+
+</Method>

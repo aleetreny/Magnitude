@@ -27,7 +27,8 @@ npm install
 npm run dev      # http://localhost:4321/Magnitude
 npm run build    # type-checks, then writes dist/
 npm run preview  # serve dist/ exactly as it will be served in production
-npm run data     # rebuild src/data/wages.json from data/source/
+npm run data     # rebuild every src/data/*.json from data/source/
+                 # or one at a time: data:wages, data:leaving-home
 ```
 
 ---
@@ -104,9 +105,9 @@ column below 1200px.
 
 ## Charts
 
-Three components. `BarChart` and `LineChart` compute their geometry with D3
-scales at build time and ship no JavaScript at all; `WageShapes` is the one
-interactive chart on the site.
+Four components. `BarChart`, `LineChart` and `Doorways` compute their geometry
+with D3 scales at build time and ship no JavaScript at all; `WageShapes` is the
+one interactive chart on the site.
 
 **`<BarChart>`** — comparing magnitude across named things.
 
@@ -149,6 +150,20 @@ The SVG holds nothing but geometry, in a normalised 0–100 box. Margins, type
 sizes and the end dots are CSS pixels, so a chart reflows on a phone without
 the labels shrinking with it. A `Show the numbers` table sits under every line
 chart, so no value is reachable only by looking.
+
+**`<Doorways>`** — where a set of countries sits on one axis, and how little
+each has moved along it. Reads `src/data/leaving-home.json`, takes an optional
+`caption` and a `highlight` country code. Each row is a door at the latest
+reading with the two survey eras banded behind it, in separate lanes: the
+dataset carries a break in series, so the eras must never be read as a before
+and an after. Horizontal positions are percentages, everything vertical is CSS
+pixels, and there is no SVG at all — the marks are boxes, which is why it
+reflows on a phone instead of scrolling. The magnified key becomes a named list
+under 860px, where callouts can no longer sit clear of the marks.
+
+`LeavingHomeLines` wraps `LineChart` for the same post: it picks countries by
+code, cuts every series at the break year and intersects the years so the table
+under the chart stays aligned row for row.
 
 ### Rules the charts follow
 
@@ -212,6 +227,28 @@ The curve between them is a monotone PCHIP interpolation in log-salary; outside
 p10–p90 nothing is published and the tails continue the slope of the outermost
 measured pair. The chart draws those stretches dashed on shaded ground and the
 scrubber's hairline goes dotted when you cross into them.
+
+---
+
+## The data behind the leaving-home post
+
+| File | What it is |
+|---|---|
+| `eurostat-yth_demo_030.json` | the raw Eurostat JSON-stat response, exactly as it came |
+| `scripts/build-leaving-home.mjs` | splits each country at the break in series and writes `src/data/leaving-home.json` |
+
+Eurostat flags a **break in series** in 2021 — the EU Labour Force Survey was
+redefined — for 34 of the 36 territories in the dataset. The build splits every
+country into the survey before it and the survey after, and nothing downstream
+subtracts across that year: a range quoted for a country is always one survey's
+own. The script **refuses to write** if that break stops being general, if a
+value falls outside a plausible age, or if any figure the post states in prose
+has moved.
+
+A country earns a row only if the older survey covered it at least ten times,
+the newer one at least three, and it reported in the last year available — one
+axis, one year, or the numbers down the right-hand column would not be
+comparable.
 
 ---
 

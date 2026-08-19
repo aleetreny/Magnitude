@@ -1,12 +1,12 @@
 ---
 question: Has the age of leaving home shifted across Europe?
-answer: Hardly anywhere. In the survey that ran to 2020, the median country's whole range of readings is 1.6 years — while the distance between the earliest country in Europe and the latest is 10.2. Where you were born decides it, not when.
+answer: Hardly anywhere. Since 2021 the median country has moved half a year, while the countries themselves stand 10.2 years apart — twenty times wider. Where you were born decides it, not when.
 category: housing
 sources:
   - Eurostat
   - EU Labour Force Survey
 charts: 2
-readingMinutes: 3
+readingMinutes: 2
 date: 2026-08-18
 draft: false
 ---
@@ -23,23 +23,19 @@ almost none of them have is a door that moves.
 <Figure
   n={1}
   wide={true}
-  title="Twenty-eight countries on one axis of age, and everything two surveys ever said about them"
-  source="Eurostat, EU Labour Force Survey, dataset yth_demo_030 · both sexes · the estimated age at which half of a cohort no longer lives with a parent · Eurostat flags a break in series in 2021, so the two lanes are two surveys and are never subtracted from one another"
+  title="Twenty-eight doors, five years each, on one axis of age"
+  source="Eurostat, EU Labour Force Survey, dataset yth_demo_030 · both sexes · the estimated age at which half of a cohort no longer lives with a parent · every mark is from the survey running since 2021"
 >
-  <Doorways caption="Each door stands at the age where the current survey puts that country in 2025. The bands behind it hold every reading each survey took." />
+  <Doorways />
 </Figure>
 
-In the survey that ran to 2020, the median country's whole range — its highest
-reading minus its lowest — is **1.6 years**. Germany's is 0.4: every reading
-from 2000 to 2020 landed between 23.7 and 24.1.
-
-Across the same axis, Finland's door sits at 21.3 and Croatia's at 31.5. The
-distance between two countries is more than six times everything a quarter
-century did inside one.
+Finland's door stands at 21.3, Croatia's at 31.5. Between the two lies **10.2
+years** — twenty times what the middle country has moved in five. Fifteen of
+the twenty-eight have not moved more than half a year.
 
 <Figure
   n={2}
-  title="Four countries, one survey, twenty-one years"
+  title="The twenty-one years before, in the survey that measured them"
   source="Eurostat, EU Labour Force Survey, dataset yth_demo_030 · both sexes · drawn only to 2020, where the definition changes"
 >
   <LeavingHomeLines
@@ -48,8 +44,9 @@ century did inside one.
   />
 </Figure>
 
-Spain is at 30.2, and it has been at the late end for as long as the survey has
-run: from 2000 to 2020 it never once left 28.3 to 29.8.
+It was just as still before. Across those twenty-one years the median country's
+whole range is 1.6 years, and Germany's is 0.4 — every reading between 23.7 and
+24.1.
 
 <KeyNumber
   value="4.5 years"
@@ -69,20 +66,18 @@ Force Survey. Figures are for both sexes and are the ones Eurostat published on
 Eurostat flags a **break in series** in 2021 — the labour force survey was
 redefined — for 34 of the 36 territories in the dataset. A reading from 2020 and
 one from 2021 are therefore not the same measurement, and no figure in this post
-is a difference across that year. Every range quoted lies inside one survey, and
-the chart draws the two surveys in separate lanes for the same reason.
+is a difference across that year. The first chart draws only the survey running
+now, where every country has the same five readings; the second stops in 2020,
+where the older one ends.
 
 A country appears if the older survey covered it at least ten times, the newer
 one at least three, and it reported in the last year available. That drops the
 United Kingdom, whose series ends in 2019, and Türkiye, whose series ends in
-2024. Coverage of the older survey varies between 11 and 21 readings, so a
-country's band is as wide as its own record, not as wide as the same span of
-years everywhere.
+2024.
 
-Two of the bands are wide because a survey wobbled rather than because a country
-did. Sweden's older readings fall steeply in the three years before the break, to
-17.5; Portugal's first reading under the new survey is 33.3, and the next year's
-is 30.1. Both are Eurostat's published figures and are drawn as published.
+The first year of the new survey produced some readings later years walked back
+— Portugal's 33.3 in 2021 against 30.1 in 2022 is the largest. They are
+Eurostat's published figures and are drawn as published.
 
 `npm run data:leaving-home` rebuilds `src/data/leaving-home.json` from the raw
 API response kept in `data/source/`. It refuses to write if any figure quoted in

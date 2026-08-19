@@ -49,6 +49,13 @@ export interface LeavingHomeData {
   };
   summary: {
     medianSpan: number;
+    /** The same, inside the survey running now — the one the first chart draws. */
+    medianSpanNow: number;
+    /** How much further apart the countries are than the median one has moved. */
+    timesWider: number;
+    /** Countries whose five years of readings fit inside the median's range. */
+    asStill: number;
+    countries: number;
     widest: { code: string; label: string; span: number };
     gap: number;
     earliest: { code: string; label: string; value: number };

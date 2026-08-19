@@ -150,14 +150,27 @@ for (const t of [eu, ...countries]) {
   }
 }
 
-const spans = countries.map((c) => c.pre.span).sort((a, b) => a - b);
-const median = spans[Math.floor(spans.length / 2)];
+const medianOf = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+
+/** Everything the median country did inside each survey, one era at a time. */
+const median = medianOf(countries.map((c) => c.pre.span));
+const medianNow = medianOf(countries.map((c) => c.post.span));
+
 const latest = countries.map((c) => c.post.last);
 const gap = +(Math.max(...latest) - Math.min(...latest)).toFixed(1);
 
 const summary = {
   /** Median country's entire range across the 2000–2020 survey. */
   medianSpan: median,
+  /** The same, inside the survey running now — the one the chart draws. */
+  medianSpanNow: medianNow,
+  /**
+   * How much further apart the countries are than the median one has moved.
+   * Both figures come from the current survey, so this compares like with like.
+   */
+  timesWider: Math.round(gap / medianNow),
+  /** Countries whose five years of readings fit inside the median's range. */
+  asStill: countries.filter((c) => c.post.span <= medianNow).length,
   widestSpan: countries.reduce((a, b) => (b.pre.span > a.pre.span ? b : a)),
   /** Distance between the earliest and the latest country in the last year. */
   gap,
@@ -184,6 +197,10 @@ const of = (code) => countries.find((c) => c.code === code);
 
 const QUOTED = [
   ['median country span, 2000–2020', summary.medianSpan, 1.6],
+  ['median country span, current survey', summary.medianSpanNow, 0.5],
+  ['how many times wider the gap is', summary.timesWider, 20],
+  ['countries as still as the median', summary.asStill, 15],
+  ['countries drawn', countries.length, 28],
   ['gap between earliest and latest country', summary.gap, 10.2],
   ['earliest country', summary.earliest.post.last, 21.3],
   ['latest country', summary.latest.post.last, 31.5],
@@ -232,6 +249,10 @@ const out = {
   },
   summary: {
     medianSpan: summary.medianSpan,
+    medianSpanNow: summary.medianSpanNow,
+    timesWider: summary.timesWider,
+    asStill: summary.asStill,
+    countries: countries.length,
     widest: { code: summary.widestSpan.code, label: summary.widestSpan.label, span: summary.widestSpan.pre.span },
     gap: summary.gap,
     earliest: { code: summary.earliest.code, label: summary.earliest.label, value: summary.earliest.post.last },

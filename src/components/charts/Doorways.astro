@@ -2,194 +2,145 @@
 /**
  * The doorways of Europe.
  *
- * One row per country, on a single axis of age. The door is the last reading;
- * behind it lie two bands, one per survey, each as wide as everything that
- * survey ever said about that country. A door is a mark, not a picture: only
- * its position along the axis carries a number.
+ * One row per country on a single axis of age. A door stands where the survey
+ * puts that country in its latest year; behind it, one hairline for each of the
+ * four years before, faintest first. Two marks, and the second is the same
+ * quantity as the first, one year at a time — so there is nothing to learn
+ * before the chart can be read.
  *
- * The two bands are drawn in separate lanes on purpose. Eurostat flags a break
- * in series in 2021 — the EU-LFS was redefined — so the older readings and the
- * newer ones are not the same measurement, and the distance between the lanes
- * is not a change in anybody's life. Stacking them would have invited exactly
- * that reading; two lanes and two labels do not.
+ * Everything drawn comes from the survey running now. Eurostat flags a break in
+ * series in 2021 — the EU-LFS was redefined — and a figure from either side of
+ * it is not the same measurement, so the older survey is not in this figure at
+ * all. It has its own, where it is drawn on its own axis.
  *
- * Geometry is computed here with a D3 scale and shipped as inert HTML: every
- * horizontal position is a percentage of the plot, every vertical dimension is
- * CSS pixels, so the chart reflows on a phone without the type shrinking.
+ * A door is a mark, not a picture: only its position along the axis carries a
+ * number. Its size is fixed pixels, so nothing about a door's own shape can be
+ * read as a quantity.
+ *
+ * Geometry comes from a D3 scale at build time. Horizontal positions are
+ * percentages of the plot and every vertical dimension is CSS pixels, so the
+ * chart reflows on a phone instead of scrolling, and the type never shrinks
+ * with it. The door itself is one SVG symbol, drawn once and placed 28 times.
  */
 import { scaleLinear } from 'd3-scale';
 import { SERIES } from '../../lib/chart';
-import { LEAVING_HOME, europeanBand, type Era, type Territory } from '../../lib/leaving-home';
+import { LEAVING_HOME, europeanBand } from '../../lib/leaving-home';
 
 interface Props {
-  /** Names what is plotted, so the chart needs no legend box. */
-  caption?: string;
   /** The country the article is written from. Drawn heavier, never recoloured. */
   highlight?: string;
 }
 
-const { caption, highlight = 'ES' } = Astro.props;
-const { countries, meta } = LEAVING_HOME;
+const { highlight = 'ES' } = Astro.props;
+const { countries, meta, summary } = LEAVING_HOME;
 
-const values = countries.flatMap((c) => c.series.map((p) => p.value));
-const lo = Math.floor(Math.min(...values) - 0.5);
-const hi = Math.ceil(Math.max(...values) + 0.5);
+/** Only the survey running now. The older one is a different measurement. */
+const era = (c: (typeof countries)[number]) => c.series.filter((p) => p.year >= meta.breakYear);
+
+const values = countries.flatMap((c) => era(c).map((p) => p.value));
+const lo = Math.min(...values) - 0.6;
+const hi = Math.max(...values) + 0.7;
 
 const x = scaleLinear().domain([lo, hi]).range([0, 100]);
 const at = (v: number) => `${x(v).toFixed(3)}%`;
 const wide = (a: number, b: number) => `${(x(b) - x(a)).toFixed(3)}%`;
-const band = (era: Era) => ({ left: at(era.min), width: wide(era.min, era.max) });
 
 const ticks: number[] = [];
 for (let t = Math.ceil(lo / 2) * 2; t <= hi; t += 2) ticks.push(t);
 
-const rows = countries.map((c) => ({
-  code: c.code,
-  label: c.label,
-  old: band(c.pre),
-  /** Where the old survey left the country, its last year before the break. */
-  handover: at(c.pre.last),
-  now: band(c.post),
-  door: at(c.post.last),
-  value: c.post.last.toFixed(1),
-  here: c.code === highlight,
-  reading: `${c.label}: ${c.post.last} in ${c.post.to}, ${c.pre.min} to ${c.pre.max} across ${c.pre.from}–${c.pre.to}`,
-}));
+const rows = countries.map((c) => {
+  const readings = era(c);
+  const now = readings[readings.length - 1]!;
+  const before = readings.slice(0, -1);
+  const reach = {
+    min: Math.min(...readings.map((p) => p.value)),
+    max: Math.max(...readings.map((p) => p.value)),
+  };
+  return {
+    label: c.label,
+    /**
+     * Everything this country has done since the survey began: the line the
+     * gauge above the rows exists to be measured against. It also gathers the
+     * row into one object — without it a far-off early reading reads as a
+     * stray mark rather than as where this country came from.
+     */
+    travel: { left: at(reach.min), width: wide(reach.min, reach.max) },
+    /** Faintest for the oldest year, so the trail reads in time order. */
+    trail: before.map((p, i) => ({
+      left: at(p.value),
+      ink: (0.2 + (i / Math.max(1, before.length - 1)) * 0.3).toFixed(2),
+      year: p.year,
+    })),
+    door: at(now.value),
+    value: now.value.toFixed(1),
+    here: c.code === highlight,
+    reading: `${c.label}: ${now.value.toFixed(1)} in ${now.year}; ${before
+      .map((p) => `${p.value.toFixed(1)} in ${p.year}`)
+      .join(', ')}`,
+  };
+});
 
 /** The band the European average has never left, in either survey. */
 const euro = europeanBand();
 const euroStrip = { left: at(euro.min), width: wide(euro.min, euro.max) };
 
 /**
- * A dimension line as long as the median country's whole record, parked in the
- * empty ground above the rows. It is a length, not a position — the one thing
- * the chart is for is comparing it against how far apart the doors sit.
+ * A dimension line as long as the median country's whole travel, parked in the
+ * empty ground above the rows. It is a length, not a position: the chart exists
+ * to be read against how far apart the doors sit.
  */
-const gauge = { width: wide(lo, lo + LEAVING_HOME.summary.medianSpan) };
+const gauge = { width: wide(lo, lo + summary.medianSpanNow) };
 
-/**
- * Column headings for the table. Countries enter the record in different
- * years — Croatia in 2002, Ireland in 2006 — so each era is headed by the
- * whole set's range, never by whichever country happens to sort first.
- */
-const eraLabel = (which: 'pre' | 'post') =>
+/** Column headings for the table, taken from the whole set rather than a row. */
+const span = (which: 'pre' | 'post') =>
   `${Math.min(...countries.map((c) => c[which].from))}–${Math.max(
     ...countries.map((c) => c[which].to),
   )}`;
-
-/**
- * The key magnifies one real row — no invented geometry — on its own axis, so
- * the parts sit far enough apart to be named.
- */
-const shown: Territory = countries.find((c) => c.code === highlight) ?? countries[0]!;
-const gLo = Math.min(shown.pre.min, shown.post.min) - 0.55;
-const gHi = Math.max(shown.pre.max, shown.post.max) + 0.75;
-const g = scaleLinear().domain([gLo, gHi]).range([0, 100]);
-const gAt = (v: number) => `${g(v).toFixed(3)}%`;
-const gWide = (a: number, b: number) => `${(g(b) - g(a)).toFixed(3)}%`;
-
-const gTicks: number[] = [];
-for (let t = Math.ceil(gLo); t <= gHi; t += 1) gTicks.push(t);
-
-const key = {
-  old: { left: gAt(shown.pre.min), width: gWide(shown.pre.min, shown.pre.max) },
-  oldMid: gAt((shown.pre.min + shown.pre.max) / 2),
-  handover: gAt(shown.pre.last),
-  now: { left: gAt(shown.post.min), width: gWide(shown.post.min, shown.post.max) },
-  nowMid: gAt((shown.post.min + shown.post.max) / 2),
-  door: gAt(shown.post.last),
-};
 ---
 
 <figure class="doorways" style={`--door:${SERIES[0]}`}>
-  {caption && <p class="what">{caption}</p>}
+  <svg width="0" height="0" class="defs" aria-hidden="true" focusable="false">
+    <symbol id="mg-door" viewBox="0 0 12 26">
+      <!-- The step, a little proud of the frame on each side. -->
+      <rect x="0" y="24.7" width="12" height="0.9" fill="var(--door)" fill-opacity="0.45"></rect>
+      <!-- The opening the leaf has swung clear of. -->
+      <rect x="8" y="1" width="3" height="23.2" fill="#16181a" fill-opacity="0.16"></rect>
+      <!-- The leaf, hinged left. -->
+      <rect x="1" y="1" width="7" height="23.2" fill="var(--door)"></rect>
+      <circle cx="6.8" cy="13" r="0.82" fill="var(--paper)"></circle>
+      <!-- Jambs and lintel, drawn last so they close the shape. -->
+      <rect
+        x="0.55"
+        y="0.55"
+        width="10.9"
+        height="24.1"
+        fill="none"
+        stroke="#16181a"
+        stroke-opacity="0.4"
+        stroke-width="0.9"></rect>
+    </symbol>
+  </svg>
 
-  <!-- ---- How to read one row, on one real country, magnified ------------ -->
-  <div class="key">
-    <p class="kicker mono">
-      How to read a row<span class="only-wide"> · {shown.label}, magnified</span>
-    </p>
+  <!-- The key is the marks themselves, set in the line that names them. -->
+  <p class="what">
+    <span class="item">
+      <svg class="mark-door" viewBox="0 0 12 26" aria-hidden="true"><use href="#mg-door" /></svg>
+      where it stands in {meta.lastYear}
+    </span>
+    <span class="item"><span class="mark-trail" aria-hidden="true" /> the four years before</span>
+  </p>
 
-    <div class="key-plot">
-      <div class="key-field">
-        <span class="call call-old mono" style={`left:${key.oldMid}`}>
-          <b>{shown.pre.from}–{shown.pre.to}</b> every reading of the old survey
-        </span>
-        <span class="lead lead-old" style={`left:${key.oldMid}`}></span>
-
-        <span class="call call-hand mono" style={`left:${key.handover}`}>
-          <b>{shown.pre.to}</b> where the old survey left it
-        </span>
-        <span class="lead lead-hand" style={`left:${key.handover}`}></span>
-
-        <span class="era old" style={`left:${key.old.left};width:${key.old.width}`}></span>
-        <span class="handover" style={`left:${key.handover}`}></span>
-        <span class="era new" style={`left:${key.now.left};width:${key.now.width}`}></span>
-        <span class="door" style={`left:${key.door}`}></span>
-
-        <span class="lead lead-door" style={`left:${key.door}`}></span>
-        <span class="call call-door mono" style={`left:${key.door}`}>
-          <b>the door</b> {shown.post.last} in {shown.post.to}
-        </span>
-
-        <span class="lead lead-new" style={`left:${key.nowMid}`}></span>
-        <span class="call call-new mono" style={`left:${key.nowMid}`}>
-          <b>{shown.post.from}–{shown.post.to}</b> the survey after it was redefined
-        </span>
-      </div>
-
-      <div class="key-axis mono">
-        {gTicks.map((t) => <span style={`left:${gAt(t)}`}>{t}</span>)}
-      </div>
-    </div>
-
-    <!-- The same four parts, named in a line, where there is no room to draw
-         the magnified row: under 860px the callouts cannot sit clear of it. -->
-    <ul class="legend">
-      <li>
-        <span class="sw sw-old" aria-hidden="true"></span>
-        <span><b>{shown.pre.from}–{shown.pre.to}</b> every reading of the old survey</span>
-      </li>
-      <li>
-        <span class="sw sw-hand" aria-hidden="true"></span>
-        <span><b>{shown.pre.to}</b> where the old survey left it</span>
-      </li>
-      <li>
-        <span class="sw sw-new" aria-hidden="true"></span>
-        <span><b>{shown.post.from}–{shown.post.to}</b> the survey after it was redefined</span>
-      </li>
-      <li>
-        <span class="sw sw-door" aria-hidden="true"></span>
-        <span><b>the door</b> where it stands in {shown.post.to}</span>
-      </li>
-    </ul>
-
-    <p class="caveat">
-      The two lanes are two surveys, not two moments. Eurostat flags a break in
-      series in {meta.breakYear} for {meta.breakCount} of the territories it publishes,
-      so the step between the lanes measures the change in the definition — not a
-      change in when anybody left.
-    </p>
-  </div>
-
-  <!-- ---- The chart ------------------------------------------------------ -->
   <div class="plot">
     <div class="head">
-      <span class="gauge" style={`width:${gauge.width}`} aria-hidden="true"></span>
-      <span class="gauge-note mono" style={`left:${gauge.width}`}>
-        <b>{LEAVING_HOME.summary.medianSpan} years wide</b>
-        the median country's entire record under the old survey
-      </span>
-
       <span class="euro-note mono" style={`left:${euroStrip.left}`}>
-        <b>The European average never leaves this column</b>
-        {euro.min}–{euro.max}, every year of both surveys
+        <b>The European average sits here</b>
+        {euro.min}–{euro.max}, and has not left it
       </span>
     </div>
 
     <div class="body">
       <div class="behind" aria-hidden="true">
-        {ticks.map((t) => <span class="rule" style={`left:${at(t)}`}></span>)}
+        {ticks.map((t) => <span class="rule" style={`left:${at(t)}`} />)}
         <span class="euro" style={`left:${euroStrip.left};width:${euroStrip.width}`}></span>
       </div>
 
@@ -199,10 +150,13 @@ const key = {
             <div class:list={['row', r.here && 'here']}>
               <span class="name">{r.label}</span>
               <span class="field" role="img" aria-label={r.reading}>
-                <span class="era old" style={`left:${r.old.left};width:${r.old.width}`} />
-                <span class="handover" style={`left:${r.handover}`} />
-                <span class="era new" style={`left:${r.now.left};width:${r.now.width}`} />
-                <span class="door" style={`left:${r.door}`} />
+                <span class="travel" style={`left:${r.travel.left};width:${r.travel.width}`} />
+                {r.trail.map((t) => (
+                  <span class="tick" style={`left:${t.left};opacity:${t.ink}`} />
+                ))}
+                <svg class="door" viewBox="0 0 12 26" style={`left:${r.door}`} aria-hidden="true">
+                  <use href="#mg-door" />
+                </svg>
               </span>
               <span class="value mono">{r.value}</span>
             </div>
@@ -212,7 +166,17 @@ const key = {
     </div>
 
     <div class="axis">
-      {ticks.map((t) => <span class="tick mono" style={`left:${at(t)}`}>{t}</span>)}
+      {ticks.map((t) => <span class="tick-label mono" style={`left:${at(t)}`}>{t}</span>)}
+    </div>
+
+    <!-- A scale bar, where a scale bar goes. Anchored to nothing, so it cannot
+         collide with the note above however narrow the plot gets. -->
+    <div class="foot">
+      <span class="gauge" style={`width:${gauge.width}`} aria-hidden="true"></span>
+      <span class="gauge-note mono">
+        <b>{summary.medianSpanNow} years</b> — all the median country has moved
+        since {meta.breakYear}
+      </span>
     </div>
   </div>
 
@@ -222,9 +186,9 @@ const key = {
       <thead>
         <tr>
           <th>Country</th>
-          <th>{eraLabel('pre')}</th>
-          <th>{eraLabel('post')}</th>
           <th>{meta.lastYear}</th>
+          <th>{span('post')}</th>
+          <th>{span('pre')}</th>
         </tr>
       </thead>
       <tbody>
@@ -232,13 +196,13 @@ const key = {
           countries.map((c) => (
             <tr>
               <td>{c.label}</td>
-              <td class="mono num">
-                {c.pre.min.toFixed(1)}–{c.pre.max.toFixed(1)}
-              </td>
+              <td class="mono num">{c.post.last.toFixed(1)}</td>
               <td class="mono num">
                 {c.post.min.toFixed(1)}–{c.post.max.toFixed(1)}
               </td>
-              <td class="mono num">{c.post.last.toFixed(1)}</td>
+              <td class="mono num soft">
+                {c.pre.min.toFixed(1)}–{c.pre.max.toFixed(1)}
+              </td>
             </tr>
           ))
         }
@@ -251,315 +215,68 @@ const key = {
   .doorways {
     --name-col: 124px;
     --value-col: 46px;
-    --row-h: 27px;
-    --lane-h: 9px;
-    --door-w: 9px;
+    --row-h: 30px;
+    --door-w: 12px;
+    --door-h: 26px;
     margin: 0;
   }
+
+  .defs {
+    position: absolute;
+  }
+
+  /* ---- The line that names the marks ------------------------------------ */
 
   .what {
-    margin: 0 0 22px;
-    font-size: 14px;
-    line-height: 1.45;
-    color: var(--ink-soft);
-  }
-
-  /* ---- The key ---------------------------------------------------------- */
-
-  .key {
-    margin: 0 0 34px;
-    padding: 18px 20px 16px;
-    border: 1px solid var(--rule);
-  }
-
-  .kicker {
-    margin: 0 0 44px;
-    font-size: 9.5px;
-    letter-spacing: 0.16em;
-    color: var(--ink-soft);
-  }
-
-  .key-plot {
-    position: relative;
-  }
-
-  .key-field {
-    position: relative;
-    height: 44px;
-  }
-
-  /* Callouts sit clear of the marks: two above, one below, each on a leader. */
-  .call {
-    position: absolute;
-    font-size: 9.5px;
-    letter-spacing: 0.06em;
-    line-height: 1.5;
-    text-transform: none;
-    color: var(--ink-soft);
-    white-space: nowrap;
-  }
-
-  .call b {
-    font-weight: 500;
-    color: var(--ink);
-  }
-
-  .call-old {
-    top: -38px;
-    transform: translateX(-50%);
-  }
-
-  .call-door {
-    top: -20px;
-    transform: translateX(-8px);
-  }
-
-  /* Below the lanes but above the axis: the only clear air left. */
-  .call-new {
-    top: 50px;
-    transform: translateX(-50%);
-  }
-
-  /* Anchored to the right of its mark, so it runs back into empty ground. */
-  .call-hand {
-    top: -20px;
-    transform: translateX(-100%);
-    padding-right: 8px;
-  }
-
-  .lead {
-    position: absolute;
-    width: 1px;
-    background: var(--rule);
-  }
-
-  .lead-old {
-    top: -22px;
-    height: 20px;
-  }
-
-  .lead-door {
-    top: -6px;
-    height: 8px;
-    transform: translateX(-0.5px);
-  }
-
-  .lead-new {
-    top: 40px;
-    height: 10px;
-  }
-
-  .lead-hand {
-    top: -6px;
-    height: 10px;
-  }
-
-  .key-axis {
-    position: relative;
-    height: 18px;
-    /* Clears the callout that sits under the lanes. */
-    margin-top: 44px;
-    border-top: 1px solid var(--rule);
-  }
-
-  .key-axis span {
-    position: absolute;
-    top: 5px;
-    transform: translateX(-50%);
-    font-size: 9.5px;
-    letter-spacing: 0.04em;
-    text-transform: none;
-    color: var(--ink-soft);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .legend {
-    display: none;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .legend li {
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 5px 0;
-    font-size: 12px;
-    line-height: 1.45;
-    color: var(--ink-soft);
-  }
-
-  .legend b {
-    font-family: var(--mono);
-    font-size: 10.5px;
-    letter-spacing: 0.06em;
-    font-weight: 500;
-    color: var(--ink);
-  }
-
-  /* The swatches are the marks themselves, at the size they are drawn. */
-  /* Each swatch keeps the lane its mark occupies in the chart, so the list
-     carries the one thing a list otherwise loses. */
-  .sw {
-    position: relative;
-    flex: none;
-    width: 26px;
-    height: 21px;
-  }
-
-  .sw-old::before,
-  .sw-new::before,
-  .sw-hand::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 8px;
-    background: rgba(22, 24, 26, 0.07);
-    border-left: 1px solid rgba(22, 24, 26, 0.28);
-    border-right: 1px solid rgba(22, 24, 26, 0.28);
-  }
-
-  .sw-old::before,
-  .sw-hand::before {
-    top: 1px;
-  }
-
-  .sw-new::before {
-    bottom: 1px;
-  }
-
-  .sw-hand::before {
-    background: none;
-    border-left: none;
-    border-right: 1px solid rgba(22, 24, 26, 0.5);
-  }
-
-  .sw-door::before {
-    content: '';
-    position: absolute;
-    left: 8.5px;
-    top: 0;
-    bottom: 2px;
-    width: 9px;
-    background: var(--door);
-  }
-
-  .sw-door::after {
-    content: '';
-    position: absolute;
-    left: 15px;
-    top: 8px;
-    width: 2px;
-    height: 2px;
-    border-radius: 50%;
-    background: var(--paper);
-  }
-
-  .caveat {
-    margin: 30px 0 0;
-    max-width: 62ch;
-    font-size: 12.5px;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 30px;
+    margin: 0 0 30px;
+    font-size: 13.5px;
     line-height: 1.5;
     color: var(--ink-soft);
   }
 
-  /* ---- The marks. Shared by the key and the chart ----------------------- */
-
-  .field,
-  .key-field {
-    display: block;
-  }
-
-  /* Everything one survey ever said about one country. */
-  .era {
-    position: absolute;
-    min-width: 2px;
-    background: rgba(22, 24, 26, 0.07);
-    border-left: 1px solid rgba(22, 24, 26, 0.28);
-    border-right: 1px solid rgba(22, 24, 26, 0.28);
-  }
-
-  .old {
-    top: 3px;
-    height: var(--lane-h);
-  }
-
-  .new {
-    top: calc(3px + var(--lane-h) + 3px);
-    height: var(--lane-h);
-  }
-
-  /* Where the old survey left the country, in its last year. */
-  .handover {
-    position: absolute;
-    top: 3px;
-    height: var(--lane-h);
-    width: 1px;
-    background: rgba(22, 24, 26, 0.5);
-  }
-
-  /* The one mark that carries the latest figure. Position is the whole datum;
-     the leaf and the handle are fixed pixels, so nothing about a door's own
-     shape can be read as a quantity. */
-  .door {
-    position: absolute;
-    top: 1px;
-    height: calc(var(--row-h) - 3px);
+  .mark-door {
     width: var(--door-w);
-    transform: translateX(calc(var(--door-w) / -2));
-    background: var(--door);
+    height: var(--door-h);
+    overflow: visible;
   }
 
-  /* The step it stands on, drawn a little proud of the leaf on each side. */
-  .door::before {
+  .item {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  /* The trail as it is actually drawn: three years on their travel line. */
+  .mark-trail {
+    position: relative;
+    width: 30px;
+    height: 18px;
+  }
+
+  .mark-trail::before {
     content: '';
     position: absolute;
-    left: -3px;
-    right: -3px;
-    bottom: -1px;
+    inset: 50% 0 auto;
     height: 1px;
-    background: var(--door);
+    background: rgba(22, 24, 26, 0.22);
   }
 
-  .door::after {
+  .mark-trail::after {
     content: '';
     position: absolute;
-    right: 1.6px;
-    top: 50%;
-    width: 2px;
-    height: 2px;
-    border-radius: 50%;
-    background: var(--paper);
-  }
-
-  .key-field .old,
-  .key-field .new,
-  .key-field .handover {
-    height: 14px;
-  }
-
-  .key-field .old,
-  .key-field .handover {
-    top: 4px;
-  }
-
-  .key-field .new {
-    top: 24px;
-  }
-
-  .key-field .door {
-    top: 1px;
-    height: 40px;
-    width: 12px;
-    transform: translateX(-6px);
-  }
-
-  .key-field .door::after {
-    right: 2.4px;
-    width: 3px;
-    height: 3px;
+    left: 4px;
+    top: 3px;
+    height: 13px;
+    width: 1px;
+    background: var(--ink);
+    opacity: 0.32;
+    box-shadow:
+      9px 0 0 var(--ink),
+      19px 0 0 var(--ink);
   }
 
   /* ---- The chart -------------------------------------------------------- */
@@ -575,41 +292,12 @@ const key = {
     margin-right: var(--value-col);
   }
 
-  /* A dimension line, drawn the way one is: a rule closed by two end ticks. */
-  .gauge {
-    position: absolute;
-    bottom: 14px;
-    left: 0;
-    height: 7px;
-    border-bottom: 1px solid rgba(22, 24, 26, 0.45);
-    border-left: 1px solid rgba(22, 24, 26, 0.45);
-    border-right: 1px solid rgba(22, 24, 26, 0.45);
-  }
-
-  .gauge-note {
-    position: absolute;
-    bottom: 4px;
-    padding-left: 10px;
-    font-size: 9.5px;
-    letter-spacing: 0.06em;
-    text-transform: none;
-    color: var(--ink-soft);
-    white-space: nowrap;
-  }
-
-  .gauge-note b {
-    display: block;
-    font-weight: 500;
-    color: var(--ink);
-  }
-
   .euro-note {
     position: absolute;
     bottom: 4px;
-    /* The column is 0.7 years wide: the note has to start at it and run right. */
-    transform: translateX(-2px);
     padding-left: 8px;
     border-left: 1px solid var(--rule);
+    transform: translateX(-1px);
     font-size: 9.5px;
     letter-spacing: 0.06em;
     line-height: 1.5;
@@ -620,6 +308,37 @@ const key = {
 
   .euro-note b {
     display: block;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  /* The scale bar sits on the same frame as the axis, so its length is read
+     against the same scale as everything above it. */
+  .foot {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin: 16px var(--value-col) 0 var(--name-col);
+  }
+
+  /* A dimension line, drawn the way one is: a rule closed by two end ticks. */
+  .gauge {
+    flex: none;
+    height: 7px;
+    border-bottom: 1px solid rgba(22, 24, 26, 0.45);
+    border-left: 1px solid rgba(22, 24, 26, 0.45);
+    border-right: 1px solid rgba(22, 24, 26, 0.45);
+  }
+
+  .gauge-note {
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+    line-height: 1.5;
+    text-transform: none;
+    color: var(--ink-soft);
+  }
+
+  .gauge-note b {
     font-weight: 500;
     color: var(--ink);
   }
@@ -643,7 +362,7 @@ const key = {
     bottom: 0;
     width: 1px;
     background: var(--rule);
-    opacity: 0.55;
+    opacity: 0.5;
   }
 
   .euro {
@@ -651,8 +370,8 @@ const key = {
     top: 0;
     bottom: 0;
     background: rgba(22, 24, 26, 0.05);
-    border-left: 1px dashed rgba(22, 24, 26, 0.34);
-    border-right: 1px dashed rgba(22, 24, 26, 0.34);
+    border-left: 1px dashed rgba(22, 24, 26, 0.3);
+    border-right: 1px dashed rgba(22, 24, 26, 0.3);
   }
 
   .row {
@@ -689,6 +408,34 @@ const key = {
     background: rgba(22, 24, 26, 0.07);
   }
 
+  /* Everything one country has done since 2021, end to end. */
+  .travel {
+    position: absolute;
+    top: calc(var(--row-h) / 2);
+    height: 1px;
+    min-width: 1px;
+    background: rgba(22, 24, 26, 0.22);
+  }
+
+  /* One earlier year. Faintest is oldest, so the trail reads in time order. */
+  .tick {
+    position: absolute;
+    top: 8px;
+    height: 13px;
+    width: 1px;
+    background: var(--ink);
+  }
+
+  .door {
+    position: absolute;
+    top: calc((var(--row-h) - var(--door-h)) / 2);
+    width: var(--door-w);
+    height: var(--door-h);
+    /* The datum is the middle of the doorway, not the edge of the leaf. */
+    transform: translateX(calc(var(--door-w) / -2));
+    overflow: visible;
+  }
+
   .value {
     padding-left: 12px;
     font-size: 10.5px;
@@ -720,7 +467,7 @@ const key = {
     border-top: 1px solid var(--rule);
   }
 
-  .tick {
+  .tick-label {
     position: absolute;
     top: 7px;
     transform: translateX(-50%);
@@ -787,6 +534,11 @@ const key = {
     font-variant-numeric: tabular-nums;
   }
 
+  /* The older survey is here for the record, not for comparison. */
+  .numbers .soft {
+    color: var(--ink-soft);
+  }
+
   @media (max-width: 860px) {
     .doorways {
       --name-col: 92px;
@@ -796,24 +548,24 @@ const key = {
       font-size: 11.5px;
       padding-right: 10px;
     }
-    .euro-note,
-    .gauge-note {
-      white-space: normal;
-      max-width: 26ch;
-    }
-    /* No room to set callouts clear of the marks: name the parts instead. */
-    .key-plot,
-    .only-wide {
-      display: none;
-    }
-    .legend {
+    /* Anchored to a column only 40px from the left edge, the note has nowhere
+       to run. Static position makes the inline `left` inert and it falls into
+       normal flow above the plot. */
+    .euro-note {
+      position: static;
       display: block;
+      white-space: normal;
+      padding: 0;
+      border: 0;
+      transform: none;
     }
-    .kicker {
-      margin-bottom: 14px;
+    .head {
+      height: auto;
+      margin: 0 0 14px;
     }
-    .caveat {
-      margin-top: 18px;
+    .foot {
+      align-items: flex-start;
+      gap: 8px;
     }
   }
 </style>

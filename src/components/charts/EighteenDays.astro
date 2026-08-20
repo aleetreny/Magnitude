@@ -1,0 +1,285 @@
+---
+/**
+ * Eighteen European days, each drawn as the twenty-four hours it is.
+ *
+ * One row per country, one row exactly a day long, so the rows can be compared
+ * without reading a single number: the blocks line up or they do not. They
+ * very nearly do, which is the finding. The two-pixel gaps between blocks fall
+ * into vertical channels running down the whole wall, and how straight those
+ * channels are is the answer to the question.
+ *
+ * Rows are ordered by time at the table, the block that sorts Europe from the
+ * Mediterranean down to the Baltic. Everything horizontal is a percentage of
+ * the day and everything vertical is in pixels, so the wall reflows onto a
+ * phone without the type shrinking with it.
+ *
+ * Band names sit above the block they name, staggered onto two lines so a
+ * narrow band still gets a full word. They are hung on the median day: the
+ * blocks move a little country to country, and the middle of the eighteen is
+ * the only honest place to put a heading that has to serve all of them.
+ */
+import { BANDS } from '../../lib/chart';
+import { TIME_USE, clock, spoken } from '../../lib/time-use';
+
+const { bands, countries, median, meta, summary } = TIME_USE;
+const DAY = meta.day;
+
+/** Where each band's heading hangs, measured on the median day. */
+const medianTotal = median.reduce((a, b) => a + b, 0);
+let walked = 0;
+const heads = bands.map((b, i) => {
+  const at = ((walked + median[i]! / 2) / medianTotal) * 100;
+  walked += median[i]!;
+  return { label: b.label, at, lower: i % 2 === 1, tail: i === bands.length - 1 };
+});
+
+/** Each row, as blocks laid end to end across the day. */
+const rows = countries.map((c) => {
+  let start = 0;
+  const blocks = c.parts.map((minutes, i) => {
+    const left = (start / DAY) * 100;
+    const width = (minutes / DAY) * 100;
+    start += minutes;
+    return {
+      key: bands[i]!.key,
+      left,
+      width,
+      /** Null on the residual, which CSS then hatches instead of filling. */
+      fill: BANDS[i] ?? null,
+      last: i === c.parts.length - 1,
+      title: `${c.label} · ${bands[i]!.label} · ${clock(minutes)}`,
+    };
+  });
+  return { label: c.label, blocks };
+});
+// The two ends of the sort carry the sentence under the figure, so they are
+// the two names worth finding without counting rows.
+const marked = rows.map((r, i) => ({ ...r, edge: i === 0 || i === rows.length - 1 }));
+
+/** The unit is in the figure's title, so the axis carries numbers only. */
+const HOURS = [0, 6, 12, 18, 24];
+
+const sleep = summary.sleep;
+const widest = summary.widest;
+const reading =
+  `Eighteen European countries, each drawn as one day of twenty-four hours split into ` +
+  `${bands.map((b) => b.label).join(', ')}. The blocks are close to the same size everywhere: ` +
+  `every country sleeps between ${spoken(sleep.min)} and ${spoken(sleep.max)}, and no block of ` +
+  `the day is more than ${spoken(widest.range)} wider in one country than in another. Rows run ` +
+  `from ${countries[0]!.label}, longest at the table, to ${countries[countries.length - 1]!.label}, shortest.`;
+---
+
+<figure class="days">
+  <div class="plot">
+    <div class="head" aria-hidden="true">
+      {
+        heads.map((h) => (
+          <span
+            class:list={['tag', 'mono', h.lower && 'lower', h.tail && 'tail']}
+            style={h.tail ? undefined : `left:${h.at.toFixed(2)}%`}
+          >
+            {h.label}
+          </span>
+        ))
+      }
+    </div>
+
+    <div class="wall" role="img" aria-label={reading}>
+      {
+        marked.map((r) => (
+          <div class="row">
+            <span class:list={['who', r.edge && 'edge']}>{r.label}</span>
+            <div class="day">
+              {r.blocks.map((b) => (
+                <span
+                  class:list={['seg', b.last && 'last']}
+                  style={
+                    `left:${b.left.toFixed(3)}%;` +
+                    // The gap between blocks comes off the width, never off the
+                    // position, so a block still starts where its hour says.
+                    `width:${b.last ? `${b.width.toFixed(3)}%` : `calc(${b.width.toFixed(3)}% - 2px)`}` +
+                    (b.fill ? `;background:${b.fill}` : '')
+                  }
+                  data-band={b.key}
+                  title={b.title}
+                />
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="axis" aria-hidden="true">
+      {
+        HOURS.map((h) => (
+          <span class="tick mono" style={`left:${(h / 24) * 100}%`}>
+            {h}
+          </span>
+        ))
+      }
+    </div>
+  </div>
+</figure>
+
+<style>
+  .days {
+    --who: 104px;
+    --row: 20px;
+    --gap: 4px;
+    margin: 0;
+  }
+
+  .plot {
+    position: relative;
+  }
+
+  /* Two lines of headings, so a block only two centimetres wide still gets a
+     word of its own instead of an abbreviation. */
+  .head {
+    position: relative;
+    height: 40px;
+    margin-left: var(--who);
+  }
+
+  .tag {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .tag::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 15px;
+    width: 1px;
+    height: 25px;
+    background: var(--rule);
+  }
+
+  .tag.lower {
+    top: 18px;
+  }
+
+  .tag.lower::after {
+    height: 7px;
+  }
+
+  /* The last block ends at the edge of the wall, so its heading is hung from
+     the edge rather than from a centre that would push it off the page. */
+  .tag.tail {
+    right: 0;
+    transform: none;
+  }
+
+  .tag.tail::after {
+    left: auto;
+    right: 8px;
+  }
+
+  .wall {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .who.edge {
+    color: var(--ink);
+  }
+
+  .who {
+    flex: none;
+    width: calc(var(--who) - 10px);
+    text-align: right;
+    font-size: 11.5px;
+    line-height: 1.2;
+    color: var(--ink-soft);
+  }
+
+  .day {
+    position: relative;
+    flex: 1 1 auto;
+    height: var(--row);
+  }
+
+  .seg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 1px;
+  }
+
+  /* The residual is not a category and is not given a colour of its own: it is
+     what the five named blocks leave behind, and it is drawn as such. */
+  .seg[data-band='rest'] {
+    background-color: #f1efec;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      rgba(22, 24, 26, 0.34) 0 1px,
+      transparent 1px 5px
+    );
+  }
+
+  .axis {
+    position: relative;
+    height: 22px;
+    margin-top: 8px;
+    margin-left: var(--who);
+    border-top: 1px solid var(--rule);
+  }
+
+  .tick {
+    position: absolute;
+    top: 6px;
+    transform: translateX(-50%);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .tick:first-child {
+    transform: none;
+  }
+
+  .tick:last-child {
+    left: auto !important;
+    right: 0;
+    transform: none;
+  }
+
+  @media (max-width: 720px) {
+    .days {
+      --who: 82px;
+      --row: 15px;
+      --gap: 3px;
+    }
+
+    .row {
+      gap: 7px;
+    }
+
+    .who {
+      width: calc(var(--who) - 7px);
+      font-size: 9.5px;
+    }
+
+    .tag {
+      font-size: 9.5px;
+    }
+  }
+</style>

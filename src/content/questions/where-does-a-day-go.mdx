@@ -1,0 +1,84 @@
+---
+question: Where does a day go?
+answer: >-
+  In eighteen European countries, on the same things and in almost the same
+  amounts. Everybody sleeps between 8h01 and 8h43, and no part of the day is more
+  than 1h36 wider in one country than in another. One block does follow the map:
+  the table.
+category: health
+sources:
+  - Eurostat
+charts: 2
+readingMinutes: 2
+date: 2026-08-20
+draft: false
+---
+
+import Figure from '../../components/Figure.astro';
+import Method from '../../components/Method.astro';
+import EighteenDays from '../../components/charts/EighteenDays.astro';
+import TableMap from '../../components/charts/TableMap.astro';
+
+Eighteen European countries kept diaries. The days came back almost identical.
+
+<Figure
+  n={1}
+  title="Eighteen European days, each one twenty-four hours long"
+  source="18 European countries · Eurostat time use survey, 2010 round · ages 20 to 74, averaged over every day of the week · work includes study and the commute, home is housework and family care, rest is washing, other travel and unclassified time"
+>
+  <EighteenDays />
+</Figure>
+
+Six blocks, and no block is more than **1h36** wider in one country than in
+another. That widest gap is free time, between Finland and Romania. The
+narrowest is sleep: **42 minutes** between Europe's shortest night and its
+longest.
+
+One block does follow the map.
+
+<Figure
+  n={2}
+  title="Time at the table, standing where it is spent"
+  wide={true}
+  source="18 European countries · Eurostat time use survey, 2010 round · spike height is minutes a day eating · the darker grey countries are the ones surveyed"
+>
+  <TableMap />
+</Figure>
+
+The six countries whose middle lies furthest south all pass **1h45** at the
+table. Of the six furthest north, only the Netherlands does.
+
+<Method>
+
+All eighteen countries are in Europe, and every figure is the average day of a
+person **aged 20 to 74**, counted across every day of the week, weekends
+included. That is why nobody appears to work eight hours: the eight-hour day of
+the people who have one, spread over seven days and over everyone in the age
+band, comes to about three.
+
+The survey is Eurostat's harmonised time use survey, in which people write down
+what they are doing through a day. It is published in **rounds rather than
+years**, and the 2010 round is the most recent one in the table. A day in that
+round is not a day now, and nothing here should be read as current.
+
+Five of the six blocks come straight off the table: sleep, eating, employment
+and study, household and family care, and leisure. The sixth, **rest**, is what
+is left of the twenty-four hours once the other five are counted. It holds
+washing and dressing, every journey that is not the journey to work, and the
+minutes a diary left unclassified. Taking it as a residual is what makes every
+row exactly one day long, so two rows can be compared by eye.
+
+The United Kingdom's rest block is the widest, **3h06** against a median of
+**2h12** everywhere else. Its diaries recorded more travel and left far more time
+unclassified: 46 minutes against 2 in Spain. The five named blocks are read off
+the table either way.
+
+The map plants each spike on the middle of the country's mainland, not on the
+middle of everything it governs. France's centre of gravity including its
+overseas departments sits in the Atlantic, and a spike in the Atlantic says
+nothing about France.
+
+`npm run data:time-use` rebuilds `src/data/time-use.json` from the response kept
+in `data/source/`. It refuses to write if any figure quoted here has moved.
+
+</Method>

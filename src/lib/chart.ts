@@ -19,6 +19,26 @@
  */
 export const SERIES = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'] as const;
 
+/**
+ * A second, separate set for charts that stack the parts of one whole rather
+ * than lay series side by side. Stacking asks a different question of colour:
+ * what matters is telling each band from the one touching it, and the bands
+ * touch in a fixed order, so the set is validated on adjacent pairs in exactly
+ * the order below.
+ *
+ * Against this site's paper (#fdfdfc): lightness band and chroma floor pass on
+ * all five; worst adjacent pair is plum against teal at CVD ΔE 9.8, and worst
+ * adjacent normal-vision pair is gold against brick at ΔE 17.2. The gold sits
+ * at 2.4:1 on paper, below the 3:1 line, which is legal only with a relief
+ * channel, so any chart using this set carries visible labels on the bands
+ * themselves rather than a legend to match up by eye.
+ *
+ * There is no sixth colour. A residual band, the part of a whole that is left
+ * once the named parts are counted, is drawn as a hatch: it is not a category
+ * and should not look like one.
+ */
+export const BANDS = ['#4a5fc4', '#c85a4a', '#d39b23', '#0f9e86', '#9a5aa8'] as const;
+
 export interface FormatOptions {
   decimals?: number;
   prefix?: string;

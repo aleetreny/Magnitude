@@ -28,8 +28,10 @@ npm run dev      # http://localhost:4321/Magnitude
 npm run build    # type-checks, then writes dist/
 npm run preview  # serve dist/ exactly as it will be served in production
 npm run data     # rebuild every src/data/*.json from data/source/
-                 # one at a time: data:wages, data:leaving-home, data:power, data:bars
-                 # data:power:fetch and data:bars:fetch re-pull from the APIs
+                 # one at a time: data:wages, data:leaving-home, data:power,
+                 #                data:bars, data:time-use
+                 # data:power:fetch, data:bars:fetch and data:time-use:fetch
+                 # re-pull from the APIs
 ```
 
 ---
@@ -106,9 +108,10 @@ column below 1200px.
 
 ## Charts
 
-Eight components. `BarChart`, `LineChart`, `Doorways`, `CheapestHour`,
-`CheapHours`, `Queue` and `Closed` compute their geometry at build time and ship
-no JavaScript at all; `WageShapes` is the one interactive chart on the site.
+Ten components. `BarChart`, `LineChart`, `Doorways`, `CheapestHour`,
+`CheapHours`, `Queue`, `Closed`, `EighteenDays` and `TableMap` compute their
+geometry at build time and ship no JavaScript at all; `WageShapes` is the one
+interactive chart on the site.
 
 **`<BarChart>`**, comparing magnitude across named things.
 
@@ -194,6 +197,30 @@ hours were, never how many, never how cheap. Runs of consecutive weeks are
 drawn as one rectangle each, which takes 1,440 marks down to 274 shapes. Same
 orientation as the clocks above it, midnight at the top.
 
+**`<EighteenDays>`**, a set of wholes drawn as wholes. Reads
+`src/data/time-use.json`, takes no props. One row per country, each row exactly
+twenty-four hours long and split into six blocks, so two rows can be compared
+without reading a number: the blocks line up or they do not. The two-pixel gaps
+between blocks fall into vertical channels running down the wall, and how
+straight those channels are *is* the finding.
+
+The block names sit above the block they name, staggered onto two lines so a
+block twenty pixels wide still gets a whole word rather than an abbreviation,
+and hung on the median country: the blocks move a little from row to row, and
+the middle of the set is the only honest place for a heading that has to serve
+all of them. That is also what lets the wall hold eighteen named countries at
+320px without a legend to match up by eye.
+
+**`<TableMap>`**, one number, standing up off a map. A spike per country,
+planted on the middle of its mainland, as tall as the minutes that country
+spends eating. Height alone will not carry a map: these spikes are only sixty
+per cent apart end to end while their feet are spread over a continent, so a
+short spike standing in Finland still reaches higher up the page than a tall one
+standing in Greece. The shade carries the same number a second time, in three
+steps of one hue, and the pattern falls out at a glance. Names sit at the *foot*
+of a spike, never at its tip, where they would land over somebody else's
+country.
+
 **`<Queue>`** and **`<Closed>`** are unit charts, where the quantity is small
 enough to be counted rather than measured against an axis. `Queue` draws one row
 per year: a dot for every ten people, ending at the glass they share. `Closed`
@@ -227,6 +254,13 @@ These are not stylistic preferences; breaking them makes charts that mislead.
   a table view, so any chart reaching four series must ship one. **A seventh
   series is not a seventh colour**, fold the tail into "other", split into two
   charts, or change the form.
+- **A second set, `BANDS`, for stacked wholes.** Five hues validated on
+  *adjacent* pairs in stack order, which is the only adjacency a stack has:
+  worst adjacent CVD ΔE 9.8, worst adjacent normal-vision ΔE 17.2. The gold sits
+  at 2.4:1 on the paper, so a chart using the set carries labels on the bands
+  themselves. There is no sixth colour: a **residual** band, the part of a whole
+  left once the named parts are counted, is hatched rather than filled, because
+  it is not a category and must not look like one.
 - **A colour belongs to a series, not to a row number.** Removing one series
   must never repaint the others.
 - **One series, one colour.** Bar length already encodes the value; colouring
@@ -344,6 +378,42 @@ Both series are read on **1 January** and only years where both exist are used.
 The register reports its stock on that date and the population figure is the
 reading for the same day: dividing premises by a population measured six months
 later would give a different answer for no reason but the calendar.
+
+---
+
+## The data behind the day post
+
+| File | What it is |
+|---|---|
+| `eurostat-tus_00age.json` | the dissemination API's JSON-stat, untouched |
+| `scripts/fetch-time-use.mjs` | pulls it; run it again and it refetches |
+| `scripts/build-time-use.mjs` | picks the six blocks, projects the map, writes `src/data/time-use.json` |
+
+Figures are for people **aged 20 to 74**, counted across every day of the week,
+weekends included. That is why nobody appears to work eight hours: an eight-hour
+day, spread over seven days and over everyone in the band, comes to about three.
+
+Five of the six blocks are read straight off the table. The sixth, **rest**, is
+the residual: twenty-four hours minus the other five. Taking it that way is what
+makes every row exactly a day long, so the rows can be compared by eye, and it
+is also where every rounding error in the published hours and minutes lands.
+
+The map is projected at build time, not in the browser. `world-atlas` outlines
+at 50m go through a conic conformal projection fitted to a window on Europe,
+written by a path context that rounds to whole pixels and drops any ring smaller
+than two pixels across. Raw, those outlines are more than a megabyte of decimals
+nobody can perceive; rounded, the same coastline is a tenth of that and looks
+identical. Spikes stand on the centroid of a country's **largest polygon**, not
+of everything it governs: France's centre of gravity including its overseas
+departments sits in the Atlantic.
+
+Two traps in `geoPath` worth knowing. Fitting a projection to a rectangle of
+longitudes and latitudes needs the *edge walked degree by degree*, as a
+`LineString`: four corners of a `Polygon` fit a conic projection to a curved
+trapezium, and a ring wound the wrong way asks it to fit everything except
+Europe, which collapses the scale to zero and stacks the whole continent on one
+point. And `geoPath(projection, context)` never calls your context's `result()`,
+so the path string has to be collected by hand.
 
 ---
 

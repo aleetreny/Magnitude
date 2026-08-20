@@ -1,0 +1,243 @@
+---
+/**
+ * Time at the table, standing up off the map.
+ *
+ * A spike per surveyed country, planted on its mainland, as tall as the minutes
+ * that country spends eating. Height alone would not carry it: the spikes are
+ * only sixty per cent apart end to end, while their feet are spread over the
+ * whole of Europe, so a short spike standing in Finland still reaches higher up
+ * the page than a tall one standing in Greece. The shade carries the same
+ * number a second time, in three steps, and the pattern falls out at a glance.
+ *
+ * The outlines are projected at build time with a conic conformal projection
+ * fitted to a window on Europe, and rounded to the pixel, which is all a
+ * 760-unit-wide map can show. Everything here is inert markup.
+ *
+ * Text is HTML laid over the drawing rather than SVG inside it. An SVG label
+ * shrinks with the map, and on a phone that would put the country names at four
+ * pixels; laid over the top, they stay the size they were set. Names sit at the
+ * foot of a spike, never at its tip: a name floating at the top of a tall spike
+ * lands over somebody else's country.
+ */
+import { TIME_USE, clock, spoken } from '../../lib/time-use';
+
+const { map, meta, summary } = TIME_USE;
+const { width: W, height: H } = map;
+
+/** Viewbox units per minute at the table, and the headroom the tallest needs. */
+const PER_MINUTE = 1.6;
+const TOP = -60;
+const VIEW_H = H - TOP;
+
+const rise = (minutes: number) => minutes * PER_MINUTE;
+
+/**
+ * Three steps of one hue, light to dark, against the paper: 3.2, 5.4 and 9.5
+ * to one, so even the palest is legible as a hairline. The cuts are round
+ * numbers on the clock rather than equal shares of the range.
+ */
+const STEPS = [
+  { upto: 105, colour: '#d9705c', label: 'under 1h45', height: 11 },
+  { upto: 120, colour: '#b8402f', label: '1h45 to 2h', height: 16 },
+  { upto: Infinity, colour: '#7d2622', label: '2 hours or more', height: 22 },
+];
+const stepOf = (minutes: number) => STEPS.findIndex((s) => minutes < s.upto || s.upto === Infinity);
+
+/** South last, so a nearer spike stands in front of the one behind it. */
+const spikes = [...map.spikes]
+  .sort((a, b) => a.y - b.y)
+  .map((s) => ({ ...s, top: s.y - rise(s.minutes), colour: STEPS[stepOf(s.minutes)]!.colour }));
+
+const pct = (x: number, y: number) => ({
+  left: `${((x / W) * 100).toFixed(2)}%`,
+  top: `${(((y - TOP) / VIEW_H) * 100).toFixed(2)}%`,
+});
+
+/**
+ * The three the eye should be able to find by name, each nudged onto open water
+ * or open country so the name does not sit on top of its own neighbour.
+ */
+const NAMED: Record<string, { dx: number; dy: number; side: 'start' | 'middle' | 'end' }> = {
+  EL: { dx: 8, dy: 14, side: 'start' },
+  ES: { dx: 0, dy: 20, side: 'middle' },
+  EE: { dx: 9, dy: 2, side: 'start' },
+};
+const pins = spikes
+  .filter((s) => NAMED[s.code])
+  .map((s) => {
+    const n = NAMED[s.code]!;
+    return { label: s.label, side: n.side, ...pct(s.x + n.dx, s.y + n.dy) };
+  });
+
+const counts = STEPS.map((s, i) => spikes.filter((k) => stepOf(k.minutes) === i).length);
+const meals = summary.meals;
+const reading =
+  `A map of Europe with a spike on each of the ${meta.countries} surveyed countries, as tall and ` +
+  `as dark as the time that country spends eating. ${counts[2]} countries spend two hours a day or ` +
+  `more at the table, ${counts[1]} spend between 1 hour 45 and 2 hours, and ${counts[0]} spend less ` +
+  `than 1 hour 45. The tallest and darkest is ${meals.highest.label}, at ${spoken(meals.max)}; the ` +
+  `shortest and palest is ${meals.lowest.label}, at ${spoken(meals.min)}. The spikes are taller and ` +
+  `darker towards the south of the map.`;
+---
+
+<figure class="tablemap">
+  <p class="what">
+    {
+      STEPS.map((s) => (
+        <span class="item">
+          <svg class="swatch" viewBox="0 0 6 24" aria-hidden="true">
+            <line x1="3" y1="23" x2="3" y2={24 - s.height} style={`stroke:${s.colour}`} />
+          </svg>
+          {s.label}
+        </span>
+      ))
+    }
+  </p>
+
+  <div class="plot">
+    <svg viewBox={`0 ${TOP} ${W} ${VIEW_H}`} role="img" aria-label={reading}>
+      <g class="land">
+        {map.shapes.map((s) => <path d={s.d} class:list={[s.on && 'on']} />)}
+      </g>
+
+      <g class="spikes">
+        {spikes.map((s) => <line x1={s.x} y1={s.y} x2={s.x} y2={s.top} class="halo" />)}
+        {
+          spikes.map((s) => (
+            <line x1={s.x} y1={s.y} x2={s.x} y2={s.top} class="stem" style={`stroke:${s.colour}`} />
+          ))
+        }
+      </g>
+    </svg>
+
+    <div class="labels" aria-hidden="true">
+      {
+        pins.map((p) => (
+          <span class:list={['pin', p.side]} style={`left:${p.left};top:${p.top}`}>
+            {p.label}
+          </span>
+        ))
+      }
+    </div>
+  </div>
+</figure>
+
+<style>
+  .tablemap {
+    margin: 0;
+  }
+
+  .what {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 6px 26px;
+    margin: 0 0 20px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+
+  .item {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 9px;
+  }
+
+  .swatch {
+    width: 6px;
+    height: 24px;
+    flex: none;
+    overflow: visible;
+  }
+
+  .swatch line {
+    stroke-width: 3;
+    stroke-linecap: round;
+  }
+
+  /* The map is the one figure on the site that wants the extra room: the
+     spikes keep their stroke width whatever the scale, so a wider map is a
+     finer one, not a fatter one. */
+  .plot {
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .land path {
+    fill: #edece8;
+    stroke: #fdfdfc;
+    stroke-width: 0.6;
+  }
+
+  /* The eighteen that kept diaries sit a shade darker than the rest of the
+     map, so a country with no spike reads as unsurveyed rather than as nil. */
+  .land path.on {
+    fill: #d8d5cd;
+  }
+
+  .spikes .stem {
+    stroke-width: 3;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .spikes .halo {
+    stroke: #fdfdfc;
+    stroke-width: 6.5;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .labels {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .pin {
+    position: absolute;
+    font-size: 12px;
+    line-height: 1;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .pin.start {
+    transform: translate(0, -0.5em);
+  }
+
+  .pin.middle {
+    transform: translate(-50%, -0.5em);
+  }
+
+  .pin.end {
+    transform: translate(-100%, -0.5em);
+  }
+
+  @media (max-width: 720px) {
+    .what {
+      gap: 6px 18px;
+      font-size: 12.5px;
+    }
+
+    .pin {
+      font-size: 10.5px;
+    }
+
+    .spikes .stem {
+      stroke-width: 2.5;
+    }
+
+    .spikes .halo {
+      stroke-width: 5;
+    }
+  }
+</style>

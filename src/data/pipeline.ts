@@ -77,7 +77,7 @@ export const PIPELINE: Record<string, readonly string[]> = {
   ],
   health: [
     'Which European country sleeps the least?',
-    'What time does a country go to bed?',
+    'Where does a day go?',
     'How much do people walk in each city?',
     'How many healthy years have we gained since 1990?',
     'Where do you wait longest for surgery?',

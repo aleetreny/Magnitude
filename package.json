@@ -10,13 +10,15 @@
     "build": "astro check && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "data": "npm run data:wages && npm run data:leaving-home && npm run data:power && npm run data:bars",
+    "data": "npm run data:wages && npm run data:leaving-home && npm run data:power && npm run data:bars && npm run data:time-use",
     "data:wages": "node scripts/build-wages.mjs",
     "data:leaving-home": "node scripts/build-leaving-home.mjs",
     "data:power": "node scripts/build-power-prices.mjs",
     "data:power:fetch": "node scripts/fetch-power-prices.mjs",
     "data:bars": "node scripts/build-bars.mjs",
-    "data:bars:fetch": "node scripts/fetch-bars.mjs"
+    "data:bars:fetch": "node scripts/fetch-bars.mjs",
+    "data:time-use": "node scripts/build-time-use.mjs",
+    "data:time-use:fetch": "node scripts/fetch-time-use.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.5",
@@ -25,21 +27,26 @@
     "d3-array": "^3.2.4",
     "d3-ease": "^3.0.1",
     "d3-format": "^3.1.2",
+    "d3-geo": "^3.1.1",
     "d3-interpolate": "^3.0.1",
     "d3-scale": "^4.0.2",
     "d3-selection": "^3.0.0",
     "d3-shape": "^3.2.0",
     "d3-transition": "^3.0.1",
-    "typescript": "^5.9.2"
+    "topojson-client": "^3.1.0",
+    "typescript": "^5.9.2",
+    "world-atlas": "^2.0.2"
   },
   "devDependencies": {
     "@types/d3-array": "^3.2.1",
     "@types/d3-ease": "^3.0.2",
     "@types/d3-format": "^3.0.4",
+    "@types/d3-geo": "^3.1.1",
     "@types/d3-interpolate": "^3.0.4",
     "@types/d3-scale": "^4.0.9",
     "@types/d3-selection": "^3.0.11",
     "@types/d3-shape": "^3.1.7",
-    "@types/d3-transition": "^3.0.9"
+    "@types/d3-transition": "^3.0.9",
+    "@types/topojson-client": "^3.1.5"
   }
 }

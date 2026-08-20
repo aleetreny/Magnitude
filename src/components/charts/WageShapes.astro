@@ -3,8 +3,8 @@ import { LEAN_INK, XMAX, allShapes } from '../../lib/wages';
 
 const shapes = allShapes().sort((a, b) => a.lean - b.lean);
 
-// Hatch: the angle carries the direction of the lean — ╲ where the bottom
-// stretches, ╱ where the top does — and the spacing carries how far. Ordered
+// Hatch: the angle carries the direction of the lean, ╲ where the bottom
+// stretches, ╱ where the top does, and the spacing carries how far. Ordered
 // texture, so it never contradicts the value it sits on.
 const HATCH = [
   { angle: 135, gap: 3 },
@@ -101,7 +101,7 @@ const still = (ys: [number, number][], row: number) => {
       <svg class="ws-key-mark" viewBox="0 0 26 12" aria-hidden="true">
         <line x1="13" y1="0" x2="13" y2="12" class="ws-key-dotted" />
       </svg>
-      <span>the job’s own middle wage — half its people earn less, half more</span>
+      <span>the job’s own middle wage: half its people earn less, half more</span>
     </li>
     <li>
       <svg class="ws-key-mark" viewBox="0 0 26 12" aria-hidden="true">
@@ -246,7 +246,7 @@ const still = (ys: [number, number][], row: number) => {
 
   /* A key has to be legible even where the mark it stands for is deliberately
      faint, so both swatches are drawn at full strength and on a denser dash
-     than the chart uses — at 12px the chart's own 1-on-5 pattern renders as
+     than the chart uses, at 12px the chart's own 1-on-5 pattern renders as
      two dots and reads as nothing at all. */
   .ws-key-dotted {
     stroke: var(--ink);
@@ -450,7 +450,7 @@ const still = (ys: [number, number][], row: number) => {
   }
 
   /* A channel of paper under the rule, so the dashes keep their contrast where
-     they cross a silhouette. Drawn only in the grid — the script gives the wave
+     they cross a silhouette. Drawn only in the grid, the script gives the wave
      a bare line, because there the ridges overlap so densely that a channel
      would carve a visible gap through all forty-nine of them. */
   .ws .ws-median-case {
@@ -469,7 +469,7 @@ const still = (ys: [number, number][], row: number) => {
   }
 
   /* The x axis. Every silhouette is drawn against its own middle wage, so the
-     scale is multiples of that wage rather than euros — which is exactly the
+     scale is multiples of that wage rather than euros, which is exactly the
      thing a reader cannot guess and has to be told. */
   .ws .ws-axis-tick {
     stroke: var(--rule);

@@ -9,7 +9,7 @@ export interface Reading {
 
 /**
  * One survey's whole life for one country. `span` is the distance from its
- * lowest reading to its highest — everything that happened to the country
+ * lowest reading to its highest, everything that happened to the country
  * while one definition held.
  */
 export interface Era {
@@ -49,7 +49,7 @@ export interface LeavingHomeData {
   };
   summary: {
     medianSpan: number;
-    /** The same, inside the survey running now — the one the first chart draws. */
+    /** The same, inside the survey running now, the one the first chart draws. */
     medianSpanNow: number;
     /** How much further apart the countries are than the median one has moved. */
     timesWider: number;
@@ -69,7 +69,7 @@ export interface LeavingHomeData {
 export const LEAVING_HOME = raw as LeavingHomeData;
 
 /**
- * The band the European average has never left, in either survey — the union
+ * The band the European average has never left, in either survey, the union
  * of the two eras' ranges. It is a statement about each series' own spread,
  * not a difference across the break, which would not be a measurement.
  */

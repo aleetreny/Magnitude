@@ -8,7 +8,7 @@ export const WALL_SIZE = 10;
 
 export interface QuestionRow {
   question: string;
-  /** Set only once the question has been answered — pipeline rows are not links. */
+  /** Set only once the question has been answered, pipeline rows are not links. */
   href?: string;
   /** Archive right-hand column: the source, or SOON while it is unanswered. */
   meta: string;
@@ -90,7 +90,7 @@ export interface WallCategory extends Category {
 /**
  * The whole wall, all seven categories, as plain data. Rendered into the page
  * as JSON so the client-side switcher can swap categories without a navigation
- * — the colour sweep would be lost across a page load.
+ *, the colour sweep would be lost across a page load.
  */
 export async function wallData(): Promise<WallCategory[]> {
   return Promise.all(

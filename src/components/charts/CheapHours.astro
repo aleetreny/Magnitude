@@ -52,6 +52,16 @@ const hourLabel = (h: number) =>
 /** Labels and rules sit on the middle of their hour, not on its top edge. */
 const rows = HOUR_MARKS.map((h) => ({ label: hourLabel(h), at: ((y(h) + 0.5) / H) * 100 }));
 
+/**
+ * The two places the ink gathers, named where they sit. Two words each: without
+ * them a reader has to work out from the hour axis what they are looking at,
+ * and that is work the chart can do for them.
+ */
+const bands = [
+  { label: 'before dawn', at: ((y(3.5) + 0.5) / H) * 100 },
+  { label: 'after lunch', at: ((y(15) + 0.5) / H) * 100 },
+];
+
 const reading =
   `The six cheapest hours of the average day, week by week, from ${weekStarts[0]} to the ` +
   `end of ${meta.to.slice(0, 4)}. They sit before dawn at the start of the record and in ` +
@@ -82,6 +92,7 @@ const reading =
 
       <div class="hours" aria-hidden="true">
         {rows.map((r) => <span class="hour mono" style={`top:${r.at}%`}>{r.label}</span>)}
+        {bands.map((b) => <span class="band mono" style={`top:${b.at}%`}>{b.label}</span>)}
       </div>
     </div>
 
@@ -94,6 +105,7 @@ const reading =
 <style>
   .cheap {
     --hour-col: 70px;
+    --band-col: 92px;
     margin: 0;
   }
 
@@ -121,6 +133,7 @@ const reading =
     position: relative;
     height: 300px;
     margin-left: var(--hour-col);
+    margin-right: var(--band-col);
   }
 
   .field svg {
@@ -170,7 +183,19 @@ const reading =
     position: relative;
     height: 24px;
     margin-left: var(--hour-col);
+    margin-right: var(--band-col);
     border-top: 1px solid var(--rule);
+  }
+
+  .band {
+    position: absolute;
+    right: 0;
+    transform: translate(calc(100% + 12px), -0.5em);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    color: var(--ink);
+    white-space: nowrap;
   }
 
   .year {
@@ -188,6 +213,11 @@ const reading =
   @media (max-width: 720px) {
     .cheap {
       --hour-col: 52px;
+      --band-col: 74px;
+    }
+    .band {
+      font-size: 9px;
+      transform: translate(calc(100% + 7px), -0.5em);
     }
     .field {
       height: 220px;

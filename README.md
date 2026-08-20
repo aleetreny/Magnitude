@@ -1,20 +1,20 @@
 # MAGNITUDE
 
 A question-led data publication. Every post is a **question** answered with one
-or two charts. The question is the unit of the site — not the card, not the
+or two charts. The question is the unit of the site, not the card, not the
 date, not the byline.
 
 Three surfaces:
 
 | Route | What it is |
 |---|---|
-| `/` and `/[category]` | The wall — ten questions from one category, full screen, never scrolls. Wheel, drag, arrow keys or the colour bands switch category with a full-screen colour sweep. |
-| `/[category]/all` | The archive — every question in the category as a numbered editorial list. |
-| `/[category]/[slug]` | The article — mostly white and black, so the charts own the colour. |
+| `/` and `/[category]` | The wall, ten questions from one category, full screen, never scrolls. Wheel, drag, arrow keys or the colour bands switch category with a full-screen colour sweep. |
+| `/[category]/all` | The archive, every question in the category as a numbered editorial list. |
+| `/[category]/[slug]` | The article, mostly white and black, so the charts own the colour. |
 
 Astro + MDX, static output, hand-written CSS, no UI framework. Most charts are
 computed with D3 scales at build time and shipped as inert inline SVG, so a post
-is plain HTML by the time it reaches a browser. One — the wage explorer — is
+is plain HTML by the time it reaches a browser. One, the wage explorer, is
 interactive, and still server-renders a flat version for readers without
 JavaScript.
 
@@ -72,7 +72,7 @@ the METHOD heading at the foot of the shipped posts.
 </Figure>
 ```
 
-That is the whole workflow. No index to update, no list to edit — the post
+That is the whole workflow. No index to update, no list to edit, the post
 appears on the wall, in the archive, and at its own URL on the next build.
 
 ### The question pipeline
@@ -82,7 +82,7 @@ written yet. They fill the wall and the archive as plain type (marked `SOON`,
 not links), so the site reads as a publication from day one.
 
 When a post's `question` frontmatter matches a pipeline entry, the entry
-disappears and the real post takes its place — matching ignores case and
+disappears and the real post takes its place, matching ignores case and
 punctuation, so near-misses still resolve. **Published posts sort newest first
 and take the biggest slots on the wall**, pipeline questions fill the rest.
 
@@ -92,14 +92,14 @@ Delete anything in that file freely. It is scaffolding for your own questions.
 
 ## The three components a post is built from
 
-**`<Figure n title source>`** — wraps a chart with the hairline, the
+**`<Figure n title source>`**, wraps a chart with the hairline, the
 `FIG. 1 · …` line in the category colour, and the source note underneath. On
 screens ≥ 1200px it bleeds 80px left into the margin rail.
 
-**`<KeyNumber value note>`** — the pull-quote number: 44px mono in the category
+**`<KeyNumber value note>`**, the pull-quote number: 44px mono in the category
 colour on the faintest wash of it, between two hairlines. One per post at most.
 
-**`<MarginNote>`** — sits in the left rail on wide screens, folds into the
+**`<MarginNote>`**, sits in the left rail on wide screens, folds into the
 column below 1200px.
 
 ---
@@ -110,7 +110,7 @@ Eight components. `BarChart`, `LineChart`, `Doorways`, `CheapestHour`,
 `CheapHours`, `Queue` and `Closed` compute their geometry at build time and ship
 no JavaScript at all; `WageShapes` is the one interactive chart on the site.
 
-**`<BarChart>`** — comparing magnitude across named things.
+**`<BarChart>`**, comparing magnitude across named things.
 
 ```jsx
 <BarChart
@@ -123,15 +123,15 @@ no JavaScript at all; `WageShapes` is the one interactive chart on the site.
 />
 ```
 
-**`<WageShapes>`** — the engraved silhouettes built for the wages post. Reads
+**`<WageShapes>`**, the engraved silhouettes built for the wages post. Reads
 `src/data/wages.json`, takes no props. The only chart on the site that ships
-JavaScript; everything else is inert SVG. Two arrangements — a stacked wave and
-a 7×7 specimen sheet — with the shapes morphing between them, and three
+JavaScript; everything else is inert SVG. Two arrangements, a stacked wave and
+a 7×7 specimen sheet, with the shapes morphing between them, and three
 orderings. Direction of lean is carried twice, by a diverging ink and by the
 hatch angle (╲ where the bottom stretches, ╱ where the top does), with the
 spacing of the hatch carrying how far, so it never rests on colour alone.
 
-**`<LineChart>`** — change over a continuous x (time, months, age).
+**`<LineChart>`**, change over a continuous x (time, months, age).
 
 ```jsx
 <LineChart
@@ -157,28 +157,28 @@ their data and only the numbers move, by the least that clears them. Four series
 ending within two hundredths of each other stack into an unreadable smudge
 otherwise.
 
-**`<Doorways>`** — where a set of countries sits on one axis, and how little
+**`<Doorways>`**, where a set of countries sits on one axis, and how little
 each has moved along it. Reads `src/data/leaving-home.json` and takes an
 optional `highlight` country code. Each row carries two marks and no more: a
 door at the latest reading, and one hairline per earlier year, on the travel
 line joining them. The second mark is the same quantity as the first, one year
-at a time, so there is nothing to learn before the chart can be read — the key
+at a time, so there is nothing to learn before the chart can be read, the key
 is the marks themselves, set in the line that names them, and there is no legend
 box at all.
 
 Only one survey is drawn. The dataset carries a break in series, and a figure
 from either side of it is not the same measurement, so the older survey is not
-in this figure — it has its own, on its own axis.
+in this figure, it has its own, on its own axis.
 
 Horizontal positions are percentages and every vertical dimension is CSS pixels,
 so it reflows on a phone rather than scrolling. The door is one SVG symbol
 placed 28 times; nothing else is SVG. The scale bar sits under the axis rather
 than beside the column note, because two notes anchored to different marks
-cannot be kept clear of each other at every width — an audit across eight
+cannot be kept clear of each other at every width, an audit across eight
 viewports is what found them colliding between 861 and 1080px, well above the
 breakpoint meant to catch it.
 
-**`<CheapestHour>`** — one clock per month, its hand on the hour that month was
+**`<CheapestHour>`**, one clock per month, its hand on the hour that month was
 cheapest. Reads `src/data/power-prices.json` and takes no props. A 24-hour dial
 with midnight at the top and noon at the bottom, so the answer to the question
 is the direction the hands point and the grid is read before it is explained.
@@ -187,10 +187,10 @@ the hand carries the hour and not the price. Each dial is its own small SVG in a
 grid cell: the twelve columns hold at every width and the dials shrink with
 them, down to 22px on a 360px screen, where a hand is still legible.
 
-**`<CheapHours>`** — 240 weeks across, 24 hours down, and a mark where that hour
+**`<CheapHours>`**, 240 weeks across, 24 hours down, and a mark where that hour
 was among the six cheapest of the average day that week. Six is a quarter of the
 day and every column has exactly six, so a column can only say *where* the cheap
-hours were — never how many, never how cheap. Runs of consecutive weeks are
+hours were, never how many, never how cheap. Runs of consecutive weeks are
 drawn as one rectangle each, which takes 1,440 marks down to 274 shapes. Same
 orientation as the clocks above it, midnight at the top.
 
@@ -199,7 +199,7 @@ enough to be counted rather than measured against an axis. `Queue` draws one row
 per year: a dot for every ten people, ending at the glass they share. `Closed`
 draws one mark per thousand premises, the ones that have since shut left as
 outlines at the end, so a fifth reads as a block rather than as a percentage.
-Both round to their unit — that rounding is what makes them countable — and both
+Both round to their unit, that rounding is what makes them countable, and both
 say so in the figure's source line.
 
 Two things learned building them. A unit chart wants to be *narrower* than the
@@ -224,8 +224,8 @@ These are not stylistic preferences; breaking them makes charts that mislead.
   lightness band, chroma floor, protanopia/deuteranopia separation (worst
   adjacent pair ΔE 9.1) and normal-vision separation (ΔE 19.6). Slots 3–5 sit
   below 3:1 on the paper, which is legal only alongside visible direct labels or
-  a table view — so any chart reaching four series must ship one. **A seventh
-  series is not a seventh colour** — fold the tail into "other", split into two
+  a table view, so any chart reaching four series must ship one. **A seventh
+  series is not a seventh colour**, fold the tail into "other", split into two
   charts, or change the form.
 - **A colour belongs to a series, not to a row number.** Removing one series
   must never repaint the others.
@@ -235,7 +235,7 @@ These are not stylistic preferences; breaking them makes charts that mislead.
   indexed to a common base.
 - **Text never wears the data colour.** Labels, values and axis type use
   `--ink` / `--ink-soft`; the coloured mark beside them carries identity.
-- **No area fill on a truncated axis.** `LineChart` enforces this — a fill
+- **No area fill on a truncated axis.** `LineChart` enforces this, a fill
   implies magnitude from zero.
 - A legend appears automatically for two or more series; a single series gets
   none, because the caption already names it.
@@ -284,8 +284,8 @@ scrubber's hairline goes dotted when you cross into them.
 | `eurostat-yth_demo_030.json` | the raw Eurostat JSON-stat response, exactly as it came |
 | `scripts/build-leaving-home.mjs` | splits each country at the break in series and writes `src/data/leaving-home.json` |
 
-Eurostat flags a **break in series** in 2021 — the EU Labour Force Survey was
-redefined — for 34 of the 36 territories in the dataset. The build splits every
+Eurostat flags a **break in series** in 2021, the EU Labour Force Survey was
+redefined, for 34 of the 36 territories in the dataset. The build splits every
 country into the survey before it and the survey after, and nothing downstream
 subtracts across that year: a range quoted for a country is always one survey's
 own. The script **refuses to write** if that break stops being general, if a
@@ -293,7 +293,7 @@ value falls outside a plausible age, or if any figure the post states in prose
 has moved.
 
 A country earns a row only if the older survey covered it at least ten times,
-the newer one at least three, and it reported in the last year available — one
+the newer one at least three, and it reported in the last year available, one
 axis, one year, or the numbers down the right-hand column would not be
 comparable.
 
@@ -308,7 +308,7 @@ comparable.
 | `scripts/build-power-prices.mjs` | reduces 40,201 hourly prices to what the charts draw |
 
 The two figures ask different things of the same record. The clocks want one
-number per month — the cheapest hour — because a single hour is comparable
+number per month, the cheapest hour, because a single hour is comparable
 across months whatever the price level did. The field wants the cheapest six
 hours of each week's average day, ranked within that week for the same reason.
 
@@ -319,7 +319,7 @@ with an error, because there is no such price. Year figures use complete
 calendar years only.
 
 Hours are local clock hours, taken from the offset the API stamps on each
-reading — the hour people live by. On the two clock changes a year one hour goes
+reading, the hour people live by. On the two clock changes a year one hour goes
 missing and one happens twice; both are kept as published.
 
 The fetch script never re-asks for a month already on disk, and rewrites the
@@ -351,7 +351,7 @@ later would give a different answer for no reason but the calendar.
 
 `src/styles/magnitude.css` holds every token. The two palettes:
 
-**Categories** — each owns a page background, an ink and a saturated band
+**Categories**, each owns a page background, an ink and a saturated band
 colour, in `src/data/categories.ts`:
 
 | | bg | ink | band |
@@ -364,10 +364,10 @@ colour, in `src/data/categories.ts`:
 | Mobility | `#e4dff1` | `#3a2f5e` | `#b8abd9` |
 | Culture | `#f0dbe8` | `#55284a` | `#d9a6c6` |
 
-**Articles** — paper `#fdfdfc`, ink `#16181a`, soft `#6b7176`, hairline
+**Articles**, paper `#fdfdfc`, ink `#16181a`, soft `#6b7176`, hairline
 `rgba(22,24,26,.14)`. The category survives only as a 4px bar at the very top of
 the page, the kicker, the figure numbers, the link underlines and the key
-number — type and hairlines, never a large fill. That is deliberate: your chart
+number, type and hairlines, never a large fill. That is deliberate: your chart
 colours never have to fight the page.
 
 Type does the rest. Helvetica Neue for display and body, IBM Plex Mono
@@ -402,7 +402,7 @@ once. Three habits each cost it most of its frame budget, and all three look
 harmless in the source:
 
 - **Never transition `color` on `.shell`.** It is inherited, so every frame of
-  the fade re-resolves the computed style of the whole document — 589ms of style
+  the fade re-resolves the computed style of the whole document, 589ms of style
   recalculation per switch, measured. Only the background cross-fades. Ink fades
   on the wordmark and the pill, which are the only things still visible while
   the sweep crosses.
@@ -447,7 +447,7 @@ The failure signature: `build` goes green and uploads its artifact, then
 steps at all. No logs, because the job never started. It reads like a Pages
 outage rather than a permissions rule.
 
-This was verified rather than guessed — the same commit was pushed to `main`
+This was verified rather than guessed, the same commit was pushed to `main`
 (default, `deploy` failed) and dispatched on the old branch (not default,
 `deploy` succeeded) a minute apart. If you see that signature, open the
 environment's branch rule before looking anywhere else.

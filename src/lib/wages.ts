@@ -114,7 +114,7 @@ export const formatPercentile = (p: number) => `p${p}`;
  *     lean = log(p90 / p50) ÷ log(p50 / p10)
  *
  * 1 means the two halves reach equally far. Below 1 the bottom stretches
- * further — the tail is part-time and partial years. Above 1 the top does —
+ * further, the tail is part-time and partial years. Above 1 the top does,
  * the tail is overtime, shifts and seniority.
  */
 export function leanOf(o: Occupation): number {
@@ -137,7 +137,7 @@ export const LEAN_NAMES = [
  * A diverging ink: cool where the bottom stretches, warm where the top does,
  * neutral grey in between. Every step clears 2.8:1 on the article's paper and
  * each arm darkens monotonically away from the middle. Direction is carried
- * twice — by hue and by the hatch angle — so it never rests on colour alone.
+ * twice, by hue and by the hatch angle, so it never rests on colour alone.
  */
 export const LEAN_INK = [
   '#12467f',

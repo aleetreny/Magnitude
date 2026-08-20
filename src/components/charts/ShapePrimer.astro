@@ -3,7 +3,7 @@
  * How to read one shape.
  *
  * The wave of forty-nine is unreadable until you have decoded a single
- * silhouette, so this draws two of them first — one that leans each way — on a
+ * silhouette, so this draws two of them first, one that leans each way, on a
  * shared euro axis, annotated in plain words. Shared is the whole point: the
  * gap between the two lower tails is a distance you can see, not a claim you
  * have to take on trust.
@@ -43,7 +43,7 @@ const panels = PAIR.map((id) => {
   const line = pts.map(([v, h]) => `${x(v).toFixed(1)},${y(h).toFixed(1)}`).join('L');
   const d = `M${x(pts[0]![0]).toFixed(1)},${y(0).toFixed(1)}L${line}L${x(pts[pts.length - 1]![0]).toFixed(1)},${y(0).toFixed(1)}Z`;
 
-  // The tail below p10 — the part the annotation points at — as its own path.
+  // The tail below p10, the part the annotation points at, as its own path.
   const tail = pts.filter(([v]) => v <= o.p['10']);
   const tailD = tail.length
     ? `M${x(tail[0]![0]).toFixed(1)},${y(0).toFixed(1)}L${tail
@@ -73,7 +73,7 @@ const floorGap = high!.p10 - low!.p10;
 <figure class="sp">
   <p class="sp-how">
     Each silhouette below is <strong>one job</strong>. Left to right is what people in
-    it are paid a year; the curve is <strong>how many earn that much</strong> — tall
+    it are paid a year; the curve is <strong>how many earn that much</strong>, tall
     where the job is crowded, flat where almost nobody is. Both are drawn on the
     same euro scale, so they can be compared directly.
   </p>
@@ -120,7 +120,7 @@ const floorGap = high!.p10 - low!.p10;
   </div>
 
   <p class="sp-punch">
-    Both jobs pay about the same in the middle — {euro(low!.median)} against{' '}
+    Both jobs pay about the same in the middle, {euro(low!.median)} against{' '}
     {euro(high!.median)}. But the lowest paid tenth of{' '}
     <strong>{low!.label}</strong> earn under {euro(low!.p10)}, while the lowest paid
     tenth of <strong>{high!.label}</strong> earn {euro(high!.p10)}. That is{' '}

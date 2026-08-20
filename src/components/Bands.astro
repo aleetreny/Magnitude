@@ -14,7 +14,7 @@ const activeIndex = categoryIndex(active);
 {/*
   Real links, not divs: the bands work with the keyboard, they are announced,
   and they still navigate with JavaScript off. On the wall and the archive a
-  click is intercepted so the category can change in place — a page load would
+  click is intercepted so the category can change in place, a page load would
   throw away the colour sweep.
 */}
 <nav class="bands" data-bands data-active={activeIndex} aria-label="Categories">
@@ -68,7 +68,7 @@ const activeIndex = categoryIndex(active);
 
   /* The inactive lightening. It was an inset shadow, which repaints the band on
      every frame of the 600ms fade; as an overlay it is an opacity change, which
-     the compositor does on its own thread. Never `filter` either way — that
+     the compositor does on its own thread. Never `filter` either way, that
      rasterises the layer and blurs the 11px label. */
   .band::before {
     content: '';
@@ -98,7 +98,7 @@ const activeIndex = categoryIndex(active);
     text-transform: uppercase;
     font-size: 11px;
     letter-spacing: 3px;
-    /* The label morphs — there is no second element to cross-fade. */
+    /* The label morphs, there is no second element to cross-fade. */
     transition:
       font-size 950ms var(--ease),
       letter-spacing 950ms var(--ease);
@@ -116,7 +116,7 @@ const activeIndex = categoryIndex(active);
 
   /* Phones: the stack turns ninety degrees and sits along the bottom edge,
      where a thumb reaches. The active tab widens to carry its own name and the
-     other six share what is left — the same morph as the desktop stack, turned
+     other six share what is left, the same morph as the desktop stack, turned
      on its side. No rule above the bar: the colour is the edge. */
   @media (max-width: 720px) {
     .bands {

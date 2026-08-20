@@ -1,6 +1,6 @@
 ---
 question: When is electricity cheapest?
-answer: Between two and three in the afternoon — in ten months of the year. The small hours, which a generation was taught to use, now cost 31% more than the afternoon does.
+answer: In Spain, between two and three in the afternoon, in ten months of the year. The small hours, which a generation was taught to use, now cost 31% more than the afternoon does.
 category: energy
 sources:
   - Red Eléctrica de España
@@ -23,20 +23,20 @@ price stopped agreeing three years ago.
   n={1}
   wide={true}
   title="Fifty-five months, and the hour each one was cheapest"
-  source="Red Eléctrica de España, apidatos.ree.es · PVPC, the regulated price for small consumers, tolls and charges included · peninsular system · 40,201 hourly prices from June 2021, when the tariff began, to December 2025"
+  source="Spain · Red Eléctrica de España · PVPC, the regulated household price · 40,201 hourly prices, June 2021 to December 2025"
 >
   <CheapestHour />
 </Figure>
 
-In 2022 five months were cheapest at four in the morning. In 2025 only two are
-— **January and December**, the darkest months of the year. Everywhere else the
+In 2022 five months were cheapest at four in the morning. In 2025 only two are:
+**January and December**, the darkest months of the year. Everywhere else the
 hand has swung to the afternoon.
 
 <Figure
   n={2}
   wide={true}
   title="Two hundred and forty weeks, and where the cheap hours sat"
-  source="Red Eléctrica de España, apidatos.ree.es · PVPC · the six cheapest hours of the average day of each week, across the 1,675 days of the record"
+  source="Spain · Red Eléctrica de España · the six cheapest hours of each week's average day"
 >
   <CheapHours />
 </Figure>
@@ -46,7 +46,7 @@ after lunch shuts every winter and comes back wider. And between seven and ten
 at night, not one cheap hour in four and a half years.
 
 And they are pulling apart. The dearest hour cost **1.54 times** the cheapest in
-2022, and **2.71 times** in 2025 — 81 € against 220 €.
+2022, and **2.71 times** in 2025: 81 € against 220 €.
 
 <KeyNumber
   value="31%"
@@ -57,10 +57,10 @@ The cheapest hour of the day used to be a habit. It has become a forecast.
 
 <Method>
 
-The price is the PVPC — the regulated tariff for small consumers, tolls and
-charges included, which is what appears on the bill of anyone on it. Figures are
-for the peninsular system; the Canaries and the Balearics are priced separately
-and are not in this post.
+All of it is Spain. The price is the PVPC, the regulated tariff for small
+consumers with tolls and charges included, which is what appears on the bill of
+anyone on it. Figures are for the peninsular system; the Canaries and the
+Balearics are priced separately and are not in this post.
 
 The series begins on **1 June 2021**, the day the time-of-use PVPC came into
 force. Ask the API for May of that year and it answers with an error, because
@@ -68,9 +68,9 @@ there is no such price to give. Nothing before that date is the same tariff, so
 nothing before it is drawn. The year figures use complete calendar years only,
 which is why 2021 has clocks but no line.
 
-Hours are local clock hours, taken from the offset stamped on each reading —
-the hour people live by rather than the one a server keeps. On the two clock
-changes a year one hour goes missing and one happens twice; both are kept as
+Hours are local clock hours, taken from the offset stamped on each reading: the
+hour people live by rather than the one a server keeps. On the two clock changes
+a year one hour goes missing and one happens twice, and both are kept as
 published.
 
 A month's cheapest hour is the hour whose average price that month was lowest.
@@ -78,8 +78,8 @@ Night is 3, 4 and 5 in the morning; afternoon is 2, 3 and 4 in the afternoon.
 Averaging by hour hides what a single day did: this is where the price tends to
 sit, not a promise about tomorrow.
 
-`npm run data:power` refetches the record a month at a time — the API refuses
-longer ranges — into `data/source/`, and rebuilds `src/data/power-prices.json`
+`npm run data:power` refetches the record a month at a time, which is all the
+API will serve, into `data/source/`, and rebuilds `src/data/power-prices.json`
 from it. The build refuses to write if any figure quoted in this post has moved.
 
 </Method>

@@ -1,5 +1,5 @@
 /**
- * The archive's category switcher — the bands behave exactly as they do on the
+ * The archive's category switcher, the bands behave exactly as they do on the
  * wall: colour sweep, scroll to top, list replays its stagger.
  */
 
@@ -115,11 +115,11 @@ export function initArchive() {
     if (wallLink) wallLink.href = cat.href;
 
     // The rows are built with `.run` already on them, so only the three
-    // survivors need replaying — and they share a single reflow.
+    // survivors need replaying, and they share a single reflow.
     list!.replaceChildren(...cat.rows.map(buildRow));
     replay([title, swept ? sweep : null, swept ? ring : null]);
 
-    document.title = `${cat.name} — all questions — MAGNITUDE`;
+    document.title = `${cat.name} · all questions · MAGNITUDE`;
     if (push && cat.archiveHref !== location.pathname) {
       history.pushState({ category: cat.id }, '', cat.archiveHref);
     }

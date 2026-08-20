@@ -22,7 +22,7 @@ interface Props extends FormatOptions {
   yTicks: Tick[];
   xDomain?: [number, number];
   yDomain?: [number, number];
-  /** Plot height in CSS pixels — the SVG carries geometry only. */
+  /** Plot height in CSS pixels, the SVG carries geometry only. */
   height?: number;
   /**
    * A 10% wash under a single series. Ignored unless the y-axis starts at or
@@ -56,7 +56,7 @@ const ys = all.map((p) => p.y);
 
 /**
  * The SVG holds nothing but geometry, in a normalised 0–100 box stretched to
- * fill the plot area. Every pixel dimension — margins, type, dots — lives in
+ * fill the plot area. Every pixel dimension, margins, type, dots, lives in
  * CSS, so the chart reflows without the text shrinking with it.
  */
 const x = scaleLinear()
@@ -391,7 +391,7 @@ const label = series.map((s) => s.name).join(' and ');
     font-variant-numeric: tabular-nums;
   }
 
-  /* No room for end labels on a phone — the legend carries identity there. */
+  /* No room for end labels on a phone, the legend carries identity there. */
   @media (max-width: 720px) {
     .plot {
       --ml: 36px;

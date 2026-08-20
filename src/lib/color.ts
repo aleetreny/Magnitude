@@ -1,6 +1,6 @@
 /**
  * Mixed at build time rather than with `color-mix()` so the article's washes are
- * plain hex in the stylesheet — one less thing to reason about when a chart is
+ * plain hex in the stylesheet, one less thing to reason about when a chart is
  * sitting on top of them.
  */
 function parse(hex: string): [number, number, number] {

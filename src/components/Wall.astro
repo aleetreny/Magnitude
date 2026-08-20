@@ -171,7 +171,7 @@ const hud = (c: (typeof data)[number]) =>
      filter survives into the 100% frame.
 
      These used to wipe in behind an animated `clip-path` as well. Measured, the
-     mask was the whole cost of a category change on a wide screen — 25 dropped
+     mask was the whole cost of a category change on a wide screen, 25 dropped
      frames out of 90, against 2 without it, and 14 with the mask left on the
      headline alone. The blur costs nothing next to it and stays. What is lost
      is a wipe that was reading underneath a simultaneous blur, translate,
@@ -257,7 +257,7 @@ const hud = (c: (typeof data)[number]) =>
 
 
   /* Phones: the 12-column wall has nowhere to go, so it becomes a plain
-     scrolling column. Everything else — colours, bands, sweep — is unchanged. */
+     scrolling column. Everything else, colours, bands, sweep, is unchanged. */
   @media (max-width: 720px) {
     .head {
       flex-direction: column;
@@ -299,7 +299,7 @@ const hud = (c: (typeof data)[number]) =>
       letter-spacing: -0.03em !important;
     }
     /* Nothing left in the footer but the hint, and no room for it beside the
-       bar — the wall itself is the instruction now. */
+       bar, the wall itself is the instruction now. */
     .foot {
       display: none;
     }

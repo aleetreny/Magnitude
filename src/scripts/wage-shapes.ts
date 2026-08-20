@@ -3,7 +3,7 @@
  *
  * Each one is a trade's pay distribution with the money divided out: the x axis
  * counts multiples of that trade's own median, the height is a share of its own
- * peak. What survives both divisions is only the form — and the forms fall into
+ * peak. What survives both divisions is only the form, and the forms fall into
  * two families that have nothing to do with what the work pays.
  *
  * The paths are rebuilt for each layout rather than scaled by a transform, so
@@ -46,7 +46,7 @@ const AXIS_FOOT = 26;
 /**
  * IBM Plex Mono advances 0.6em per glyph and the label adds 0.06em of
  * letter-spacing, so a name's width is exactly its length × 0.66em. Measured,
- * not estimated — trimming to a cell has to be right the first time.
+ * not estimated, trimming to a cell has to be right the first time.
  */
 const MONO_ADVANCE = 0.66;
 function fitLabel(text: string, boxW: number, fontPx: number): string {
@@ -91,7 +91,7 @@ export function initWageShapes(root: HTMLElement) {
   if (!stage) return;
 
   const shapes = allShapes().map((s) => ({ ...s, ys: resample(s.points) }));
-  /** The shape of the median trade — the ghost every silhouette is read against. */
+  /** The shape of the median trade, the ghost every silhouette is read against. */
   const typical = Array.from({ length: SAMPLES }, (_, i) => mean(shapes, (s) => s.ys[i]!) ?? 0);
 
   let layout: Layout = 'wave';
@@ -119,7 +119,7 @@ export function initWageShapes(root: HTMLElement) {
    */
   const ORDER_TEXT: Record<Order, string> = {
     lean: 'Sorted by shape: the jobs with the longest low-pay tail first, the ones with the longest high-pay tail last.',
-    pay: 'Sorted by pay: the worst paid job first, the best paid last — which scatters the colours, because the two have almost nothing to do with each other.',
+    pay: 'Sorted by pay: the worst paid job first, the best paid last, which scatters the colours, because the two have almost nothing to do with each other.',
     family: 'Grouped by kind of work, in the official order: managers first, then professionals, technicians, clerical, services, trades, and labouring last.',
   };
   const LAYOUT_TEXT: Record<Layout, string> = {
@@ -311,7 +311,7 @@ export function initWageShapes(root: HTMLElement) {
 
   /**
    * The wave's x axis. Without it the reader can see that a shape leans, but
-   * has no way to say how far — "left" and "right" are only a direction until
+   * has no way to say how far, "left" and "right" are only a direction until
    * they are given a number.
    */
   const AXIS = [

@@ -5,7 +5,7 @@
  * The endpoint refuses ranges longer than about a month at hourly resolution,
  * so the record is fetched a month at a time and the responses are stored in
  * one array, each untouched, in the order they were asked for. Nothing is
- * averaged or reshaped here — that is `build-power-prices.mjs`, which reads
+ * averaged or reshaped here, that is `build-power-prices.mjs`, which reads
  * this file and never the network.
  *
  *   node scripts/fetch-power-prices.mjs 2021 2025

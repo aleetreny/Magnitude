@@ -9,12 +9,12 @@
  *
  * Slots 3, 4 and 5 sit below 3:1 against the paper. That is legal only with a
  * relief channel, so any chart reaching four or more series must carry visible
- * direct labels or a table view — both, in the case of the wage explorer.
+ * direct labels or a table view, both, in the case of the wage explorer.
  *
  * Assign in order, slot 1 first, and never cycle. A seventh series is not a
  * seventh colour: fold the tail into "other", facet, or change the form.
  *
- * Everything that is not data — axes, ticks, labels, rules — wears the page's
+ * Everything that is not data, axes, ticks, labels, rules, wears the page's
  * own ink tokens, never a series colour.
  */
 export const SERIES = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'] as const;

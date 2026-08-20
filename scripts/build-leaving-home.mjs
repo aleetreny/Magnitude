@@ -7,7 +7,7 @@
  * at the 2021 break in series, and writes the summary the chart draws.
  *
  * The 2021 split is the whole reason this script exists. Eurostat flags a break
- * for 34 of the 36 territories in that year — the EU-LFS was redefined — so a
+ * for 34 of the 36 territories in that year, the EU-LFS was redefined, so a
  * figure from 2020 and one from 2021 are not the same measurement and must
  * never be differenced. Everything downstream works within one era or the
  * other, never across.
@@ -124,7 +124,7 @@ const breakYearFlags = Object.keys(geoIndex).filter(
 if (breakYearFlags.length < 25) {
   throw new Error(
     `only ${breakYearFlags.length} territories are flagged as breaking in ${BREAK_YEAR}. ` +
-      `The post is built on that break being general — re-read the data before publishing.`,
+      `The post is built on that break being general, re-read the data before publishing.`,
   );
 }
 
@@ -162,7 +162,7 @@ const gap = +(Math.max(...latest) - Math.min(...latest)).toFixed(1);
 const summary = {
   /** Median country's entire range across the 2000–2020 survey. */
   medianSpan: median,
-  /** The same, inside the survey running now — the one the chart draws. */
+  /** The same, inside the survey running now, the one the chart draws. */
   medianSpanNow: medianNow,
   /**
    * How much further apart the countries are than the median one has moved.

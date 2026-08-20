@@ -5,11 +5,11 @@
  * One row per country on a single axis of age. A door stands where the survey
  * puts that country in its latest year; behind it, one hairline for each of the
  * four years before, faintest first. Two marks, and the second is the same
- * quantity as the first, one year at a time — so there is nothing to learn
+ * quantity as the first, one year at a time, so there is nothing to learn
  * before the chart can be read.
  *
  * Everything drawn comes from the survey running now. Eurostat flags a break in
- * series in 2021 — the EU-LFS was redefined — and a figure from either side of
+ * series in 2021, the EU-LFS was redefined, and a figure from either side of
  * it is not the same measurement, so the older survey is not in this figure at
  * all. It has its own, where it is drawn on its own axis.
  *
@@ -61,7 +61,7 @@ const rows = countries.map((c) => {
     /**
      * Everything this country has done since the survey began: the line the
      * gauge above the rows exists to be measured against. It also gathers the
-     * row into one object — without it a far-off early reading reads as a
+     * row into one object, without it a far-off early reading reads as a
      * stray mark rather than as where this country came from.
      */
     travel: { left: at(reach.min), width: wide(reach.min, reach.max) },
@@ -125,7 +125,7 @@ const span = (which: 'pre' | 'post') =>
   <p class="what">
     <span class="item">
       <svg class="mark-door" viewBox="0 0 12 26" aria-hidden="true"><use href="#mg-door" /></svg>
-      where it stands in {meta.lastYear}
+      the age in {meta.lastYear}
     </span>
     <span class="item"><span class="mark-trail" aria-hidden="true" /> the four years before</span>
   </p>

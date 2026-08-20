@@ -1,9 +1,9 @@
 /**
  * The seven categories, in wall order.
  *
- * `bg`   — full-screen page background on the wall and the archive
- * `ink`  — text colour on that background; also the article `--accent`
- * `band` — saturated version of `bg`, used for the fixed edge bands and the
+ * `bg`: full-screen page background on the wall and the archive
+ * `ink`: text colour on that background; also the article `--accent`
+ * `band`: saturated version of `bg`, used for the fixed edge bands and the
  *          4px rule at the top of an article
  */
 export interface Category {

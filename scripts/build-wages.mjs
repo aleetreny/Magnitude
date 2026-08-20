@@ -39,7 +39,7 @@ const occupations = src.occupations.map((o) => ({
     75: Math.round(o.percentiles['75']),
     90: Math.round(o.percentiles['90']),
   },
-  // The quantile function, p01…p99, in whole euros — finer is beyond what the
+  // The quantile function, p01…p99, in whole euros, finer is beyond what the
   // survey resolves, never mind what a screen can draw.
   q: o.q.map((v) => Math.round(v)),
   spread: {

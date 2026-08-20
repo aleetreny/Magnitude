@@ -5,7 +5,7 @@
  *
  * When you publish `src/content/questions/<slug>.mdx` whose `question`
  * frontmatter matches one of these strings, the pipeline entry disappears and
- * the real post takes its place. Delete freely — this file is scaffolding for
+ * the real post takes its place. Delete freely, this file is scaffolding for
  * your own questions, not content.
  */
 export const PIPELINE: Record<string, readonly string[]> = {

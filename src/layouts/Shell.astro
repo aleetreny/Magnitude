@@ -58,7 +58,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     font-family: var(--display);
     /* Only the background cross-fades here. `color` is inherited, so animating
        it on the shell re-resolves the computed style of every node in the
-       document on every frame of the fade — 589ms of style recalculation per
+       document on every frame of the fade, 589ms of style recalculation per
        category change, measured. The ink now fades on the handful of elements
        that stay visible instead (see `.ink-fade` in magnitude.css); everything
        else is either replayed from zero or sitting under the opaque sweep while
@@ -99,8 +99,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   }
 
   /* The disc is a flat fill, so it is rastered small and blown up by the
-     compositor rather than rastered at its final 230vmax. Same geometry —
-     20vmax × 11.5 — for 1/132nd of the pixels: 169² instead of 1941² on a
+     compositor rather than rastered at its final 230vmax. Same geometry,
+     20vmax × 11.5, for 1/132nd of the pixels: 169² instead of 1941² on a
      phone. A flat colour loses nothing to the upscale, and the circle's edge
      only gets softer. */
   .sweep {
@@ -108,7 +108,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     height: 20vmax;
   }
 
-  /* The ring cannot take the same trick — its 2px border would scale with it —
+  /* The ring cannot take the same trick, its 2px border would scale with it,
      but it is transparent almost everywhere, which is the cheap kind of layer. */
   .sweep-ring {
     width: 230vmax;
@@ -149,7 +149,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   }
 
   /* Phones keep the wall's central rule: it never scrolls. The shell reserves
-     the band bar's height, so no question can ever pass under it — the wall
+     the band bar's height, so no question can ever pass under it, the wall
      simply shows as many questions as the screen has room for. */
   @media (max-width: 720px) {
     html[data-variant='wall'] .shell {

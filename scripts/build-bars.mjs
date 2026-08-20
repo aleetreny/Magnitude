@@ -121,7 +121,7 @@ const out = {
     registry: raw.registry,
     population: raw.population,
     /** What is being counted, in the register's own words. */
-    activity: 'CNAE 563 — establecimientos de bebidas',
+    activity: 'CNAE 563, establecimientos de bebidas',
     from: first.year,
     to: last.year,
     perMark: PER_MARK,

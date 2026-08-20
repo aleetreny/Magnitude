@@ -23,7 +23,7 @@ const paper = '#fdfdfc';
 
 // The whole point of the article palette: the page stays white and black so the
 // charts own the colour. The category survives as the 4px rule at the very top,
-// the kicker, the figure numbers, the link underlines — type and hairlines only.
+// the kicker, the figure numbers, the link underlines, type and hairlines only.
 const wash = mix(c.bg, paper, 0.3);
 
 const meta = [
@@ -41,7 +41,7 @@ const stamp = date.toISOString().slice(0, 10);
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{question} — MAGNITUDE</title>
+    <title>{question} · MAGNITUDE</title>
     <meta name="description" content={answer} />
     <link rel="canonical" href={canonical.href} />
     <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
@@ -148,7 +148,7 @@ const stamp = date.toISOString().slice(0, 10);
 
      One backdrop-filter, not the four a true progressive blur wants. Measured
      on a wide screen, each additional layer costs about 2.5ms of every scroll
-     frame — four of them took the article from 17.1ms to 25.8ms and dropped 27
+     frame, four of them took the article from 17.1ms to 25.8ms and dropped 27
      frames in 55. One is free. So the radius is constant and only its opacity
      ramps; the wash above it ramps on the same curve, and between them the
      constant radius does not read. */
@@ -159,7 +159,7 @@ const stamp = date.toISOString().slice(0, 10);
     z-index: 4;
     pointer-events: none;
     /* Off at rest. The header sits inside this strip, and a boundary that
-       blurs the wordmark before the page has moved is not a boundary — it is
+       blurs the wordmark before the page has moved is not a boundary, it is
        a smudge. It costs nothing here either: a fully transparent layer is
        never composited, so the backdrop-filter does not run at the top. */
     opacity: 0;
@@ -189,7 +189,7 @@ const stamp = date.toISOString().slice(0, 10);
     backdrop-filter: blur(14px);
     /* Nothing at all across the lower half of the strip: type stays completely
        sharp until it is close to the edge, and only then goes. Eased rather
-       than linear even so — a straight ramp shows the exact line where the
+       than linear even so, a straight ramp shows the exact line where the
        blur begins, which is the floating-line problem in another form. */
     -webkit-mask-image: linear-gradient(
       to top,

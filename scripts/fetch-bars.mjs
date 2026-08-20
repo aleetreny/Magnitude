@@ -22,7 +22,7 @@ const API = 'https://servicios.ine.es/wstempus/js/ES/DATOS_SERIE';
 const YEARS = 20;
 
 /**
- * CNAE group 563, "establecimientos de bebidas" — the drinking places. Not
+ * CNAE group 563, "establecimientos de bebidas", the drinking places. Not
  * 561 restaurants, not 562 catering: the thing everyone means by a bar.
  */
 const BARS = {
@@ -69,8 +69,8 @@ async function series(code, periods) {
 
 const out = {
   source: 'Instituto Nacional de Estadística',
-  registry: 'DIRCE — Directorio Central de Empresas, local units by CNAE group',
-  population: 'ECP — Estadística Continua de Población, 1 January',
+  registry: 'DIRCE, Directorio Central de Empresas, local units by CNAE group',
+  population: 'ECP, Estadística Continua de Población, 1 January',
   bars: { national: await series(BARS.national, YEARS), regions: {} },
   populationSeries: await series(POPULATION, YEARS * 4),
 };

@@ -40,7 +40,7 @@ const PHONE = window.matchMedia('(max-width: 720px)');
 const narrow = () => PHONE.matches;
 
 /** Replay a set of CSS entrances. One forced reflow for the whole set, never
- *  one per element — a category change replays thirteen of them at once, and
+ *  one per element, a category change replays thirteen of them at once, and
  *  thirteen synchronous layouts is most of the jank on the switch. */
 function replay(els: (Element | null | undefined)[], cls = 'run') {
   const live = els.filter(Boolean) as HTMLElement[];
@@ -84,7 +84,7 @@ export function initWall() {
    *  questions that do not fit. Either way nothing runs past the stage. */
   function fit() {
     if (!stage || !wall) return;
-    // Write, then read, then write — never interleaved. Reading a height back
+    // Write, then read, then write, never interleaved. Reading a height back
     // between two `hidden` writes flushes layout once per slot.
     for (const slot of slots) slot.hidden = slot.dataset.filled !== '1';
 
@@ -123,7 +123,7 @@ export function initWall() {
     current = i;
 
     // The one read of the frame. Everything after it is a write, so layout is
-    // flushed once — by `replay` — rather than after each of them.
+    // flushed once, by `replay`: rather than after each of them.
     const rect = bands[i]?.getBoundingClientRect();
     const swept = Boolean(sweep && ring && rect);
     if (sweep && ring && rect) {
@@ -166,7 +166,7 @@ export function initWall() {
     // Thirteen entrances, one reflow.
     replay([...slots, hud, swept ? sweep : null, swept ? ring : null]);
 
-    document.title = `${cat.name} — MAGNITUDE`;
+    document.title = `${cat.name} · MAGNITUDE`;
     if (push && cat.href !== location.pathname) {
       history.pushState({ category: cat.id }, '', cat.href);
     }
@@ -194,8 +194,8 @@ export function initWall() {
 
   // Wheel is a pointer-device gesture, and the listener has to be non-passive
   // to swallow the scroll. A non-passive wheel listener makes the compositor
-  // wait on the main thread for every touch-scroll too, so on a phone — where
-  // it would only ever return early — it is not registered at all.
+  // wait on the main thread for every touch-scroll too, so on a phone, where
+  // it would only ever return early, it is not registered at all.
   const onWheel = (e: WheelEvent) => {
     e.preventDefault();
     if (busy || Math.abs(e.deltaY) + Math.abs(e.deltaX) < WHEEL_THRESHOLD) return;
@@ -221,8 +221,8 @@ export function initWall() {
   let fromY: number | null = null;
   let dragged = false;
   document.addEventListener('pointerdown', (e) => {
-    // The bands are their own control; everything else on the wall — questions
-    // included — is fair game for a swipe, or there would be almost nowhere on
+    // The bands are their own control; everything else on the wall, questions
+    // included, is fair game for a swipe, or there would be almost nowhere on
     // a phone left to start one.
     if ((e.target as Element | null)?.closest('[data-bands]')) return;
     fromX = e.clientX;

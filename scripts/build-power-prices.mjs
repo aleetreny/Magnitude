@@ -3,8 +3,8 @@
  *
  * `data/source/ree-pvpc-hourly.json` holds every response the API gave, one per
  * month, untouched. This reduces them to an hour-of-day profile per year and
- * the cheapest hour of each month — a few hundred numbers instead of three
- * megabytes — and refuses to write if anything the post says has moved.
+ * the cheapest hour of each month, a few hundred numbers instead of three
+ * megabytes, and refuses to write if anything the post says has moved.
  *
  * Hours are local clock hours, taken from the offset the API itself stamps on
  * each reading. That is the hour people live by: on the two clock-change days a
@@ -46,7 +46,7 @@ for (const m of raw.months) {
 }
 
 if (readings.length < 35_000) {
-  throw new Error(`only ${readings.length} hourly readings — the record is short`);
+  throw new Error(`only ${readings.length} hourly readings, the record is short`);
 }
 for (const r of readings) {
   if (!(r.value > 0) || r.value > 1500) {
@@ -117,7 +117,7 @@ const years = FULL_YEARS.map((year) => {
 });
 
 for (const y of years) {
-  if (y.n < 8600) throw new Error(`${y.year} has only ${y.n} hours — not a full year`);
+  if (y.n < 8600) throw new Error(`${y.year} has only ${y.n} hours, not a full year`);
 }
 
 // ---- The six cheapest hours of every day, gathered into weeks ---------------
@@ -154,7 +154,7 @@ for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
 /**
  * The six cheapest hours of the average day of each week. Ranking the week's
  * mean day rather than counting how often an hour made a daily list gives every
- * column exactly six marks, so a column can only say where — never how much.
+ * column exactly six marks, so a column can only say where, never how much.
  */
 const cheapestOf = weeks.map((w) => {
   const hours = profile(w.flatMap((d) => byDay.get(d).map((r) => ({ hour: r.hour, value: r.value }))));
@@ -246,7 +246,7 @@ const QUOTED = [
   ['days of record', days.length, 1675],
   ['weeks drawn', weeks.length, 240],
   ['marks on the field', band.flat().length && CHEAPEST_N * weeks.length, 1440],
-  // 7pm to 10pm never makes the list — the one flat statement the field makes.
+  // 7pm to 10pm never makes the list, the one flat statement the field makes.
   ['weeks with a cheap hour from 7 to 10pm', [19, 20, 21, 22].reduce((n, h) => n + band[h].length, 0), 0],
 ];
 
@@ -259,7 +259,7 @@ for (const [what, found, stated] of QUOTED) {
 const out = {
   meta: {
     source: 'Red Eléctrica de España',
-    series: 'PVPC — the regulated price for small consumers, tolls and charges included',
+    series: 'PVPC, the regulated price for small consumers, tolls and charges included',
     endpoint: raw.endpoint,
     geo: raw.geo,
     unit: '€/MWh',

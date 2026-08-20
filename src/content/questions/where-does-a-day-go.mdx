@@ -8,7 +8,7 @@ answer: >-
 category: health
 sources:
   - Eurostat
-charts: 2
+charts: 1
 readingMinutes: 2
 date: 2026-08-20
 draft: false
@@ -17,36 +17,27 @@ draft: false
 import Figure from '../../components/Figure.astro';
 import Method from '../../components/Method.astro';
 import EighteenDays from '../../components/charts/EighteenDays.astro';
-import TableMap from '../../components/charts/TableMap.astro';
 
 Eighteen European countries kept diaries. The days came back almost identical.
 
 <Figure
   n={1}
   title="Eighteen European days, each one twenty-four hours long"
-  source="18 European countries · Eurostat time use survey, 2010 round · ages 20 to 74, averaged over every day of the week · work includes study and the commute, home is housework and family care, rest is washing, other travel and unclassified time"
+  wide={true}
+  source="18 European countries · Eurostat time use survey, 2010 round · ages 20 to 74, every day of the week · work includes study and the commute, home is housework and family care, rest is washing, other travel and unclassified minutes"
 >
   <EighteenDays />
 </Figure>
 
-Six blocks, and no block is more than **1h36** wider in one country than in
-another. That widest gap is free time, between Finland and Romania. The
-narrowest is sleep: **42 minutes** between Europe's shortest night and its
-longest.
+Five threads, and none of them bends by more than an hour and three quarters
+across the whole of Europe. No block of the day is more than **1h36** wider in
+one country than in another: that widest gap is free time, between Finland and
+Romania. The narrowest is sleep, **42 minutes** between Europe's shortest night
+and its longest.
 
-One block does follow the map.
-
-<Figure
-  n={2}
-  title="Time at the table, standing where it is spent"
-  wide={true}
-  source="18 European countries · Eurostat time use survey, 2010 round · spike height is minutes a day eating · the darker grey countries are the ones surveyed"
->
-  <TableMap />
-</Figure>
-
-The six countries whose middle lies furthest south all pass **1h45** at the
-table. Of the six furthest north, only the Netherlands does.
+The one block that follows a map is the table. The six countries whose middle
+lies furthest south all pass **1h45** there. Of the six furthest north, only the
+Netherlands does.
 
 <Method>
 
@@ -73,10 +64,9 @@ The United Kingdom's rest block is the widest, **3h06** against a median of
 unclassified: 46 minutes against 2 in Spain. The five named blocks are read off
 the table either way.
 
-The map plants each spike on the middle of the country's mainland, not on the
-middle of everything it governs. France's centre of gravity including its
-overseas departments sits in the Atlantic, and a spike in the Atlantic says
-nothing about France.
+Furthest south and furthest north are measured at the centre of a country's
+mainland, not of everything it governs: France's centre of gravity including
+its overseas departments sits in the Atlantic.
 
 `npm run data:time-use` rebuilds `src/data/time-use.json` from the response kept
 in `data/source/`. It refuses to write if any figure quoted here has moved.

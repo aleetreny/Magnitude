@@ -2,29 +2,98 @@
 /**
  * Eighteen European days, each drawn as the twenty-four hours it is.
  *
- * One row per country, one row exactly a day long, so the rows can be compared
- * without reading a single number: the blocks line up or they do not. They
- * very nearly do, which is the finding. The two-pixel gaps between blocks fall
- * into vertical channels running down the whole wall, and how straight those
- * channels are is the answer to the question.
+ * One row per country, one row exactly a day long, so two rows can be compared
+ * without reading a single number: the blocks line up or they do not.
  *
- * Rows are ordered by time at the table, the block that sorts Europe from the
- * Mediterranean down to the Baltic. Everything horizontal is a percentage of
- * the day and everything vertical is in pixels, so the wall reflows onto a
- * phone without the type shrinking with it.
+ * Five threads stitch the wall together. Each one runs through the seam between
+ * two blocks, country by country, from the top of the wall to the bottom. The
+ * seams are where the day is decided, and a thread is the only way to see how
+ * little they wander: without it the eye has to carry a position across the gap
+ * between rows and guess. With it, the answer to the question is the shape of
+ * five lines, and they are very nearly straight.
  *
- * Band names sit above the block they name, staggered onto two lines so a
- * narrow band still gets a full word. They are hung on the median day: the
- * blocks move a little country to country, and the middle of the eighteen is
- * the only honest place to put a heading that has to serve all of them.
+ * Geometry is a d3 stack over the six blocks and a linear scale across the day,
+ * resolved at build time. Horizontal positions are percentages and every
+ * vertical dimension is CSS pixels, so the wall reflows onto a phone without
+ * the type shrinking with it. The threads live in one SVG laid over the rows,
+ * in a box normalised to the row pitch rather than to pixels, which is what
+ * lets the same coordinates serve both the desktop rows and the shorter ones a
+ * phone gets.
+ *
+ * Rows are ordered by time at the table, the one block that sorts Europe from
+ * the Mediterranean down to the Baltic.
  */
+import { scaleLinear } from 'd3-scale';
+import { stack } from 'd3-shape';
 import { BANDS } from '../../lib/chart';
 import { TIME_USE, clock, spoken } from '../../lib/time-use';
 
 const { bands, countries, median, meta, summary } = TIME_USE;
-const DAY = meta.day;
 
-/** Where each band's heading hangs, measured on the median day. */
+/** Row height and the gap under it, as a ratio. CSS keeps this ratio at 5:1
+ *  on both sides of the breakpoint, so one set of coordinates serves both. */
+const ROW = 5;
+const GAP = 1;
+const PITCH = ROW + GAP;
+/** The wall in row pitches: the last row carries no trailing gap. */
+const WALL = countries.length - GAP / PITCH;
+
+const x = scaleLinear().domain([0, meta.day]).range([0, 100]);
+
+const keys = bands.map((b) => b.key);
+const series = stack().keys(keys)(
+  countries.map((c) => Object.fromEntries(bands.map((b, i) => [b.key, c.parts[i]!]))) as never,
+);
+
+/** Each row, as blocks laid end to end across the day. */
+const rows = countries.map((c, i) => ({
+  label: c.label,
+  edge: i === 0 || i === countries.length - 1,
+  blocks: bands.map((b, j) => {
+    const [from, to] = series[j]![i] as unknown as [number, number];
+    const last = j === bands.length - 1;
+    const first = j === 0;
+    // A pixel is taken off each side of a block, so the channel between two of
+    // them is two pixels wide and the seam runs down the middle of it. Off one
+    // side only and the thread would ride the edge of the next block.
+    const trimLeft = first ? 0 : 1;
+    const trimRight = last ? 0 : 1;
+    return {
+      key: b.key,
+      left: x(from),
+      width: x(to) - x(from),
+      trimLeft,
+      trim: trimLeft + trimRight,
+      last,
+      /** Null on the residual, which CSS then hatches instead of filling. */
+      fill: BANDS[j] ?? null,
+      title: `${c.label} · ${b.label} · ${clock(c.parts[j]!)}`,
+    };
+  }),
+}));
+
+/**
+ * The five seams, each a thread through the boundary it marks, from the top of
+ * the wall to the bottom.
+ *
+ * A thread runs straight down inside a row, in the channel between the two
+ * blocks it separates, and takes its whole sideways step in the gap between one
+ * row and the next. Drawn instead from row centre to row centre it would slice
+ * diagonally across the fills, which reads as a mistake and exaggerates how far
+ * the seam has actually moved.
+ */
+const threads = keys.slice(0, -1).map((_, j) => {
+  const at = countries.flatMap((_, i) => {
+    const seam = x(series[j]![i]![1] as number) * 10;
+    return [
+      { x: seam, y: i },
+      { x: seam, y: i + ROW / PITCH },
+    ];
+  });
+  return at.map((p, k) => `${k ? 'L' : 'M'}${p.x.toFixed(2)} ${p.y.toFixed(3)}`).join('');
+});
+
+/** Where each block's heading hangs, measured on the median day. */
 const medianTotal = median.reduce((a, b) => a + b, 0);
 let walked = 0;
 const heads = bands.map((b, i) => {
@@ -32,29 +101,6 @@ const heads = bands.map((b, i) => {
   walked += median[i]!;
   return { label: b.label, at, lower: i % 2 === 1, tail: i === bands.length - 1 };
 });
-
-/** Each row, as blocks laid end to end across the day. */
-const rows = countries.map((c) => {
-  let start = 0;
-  const blocks = c.parts.map((minutes, i) => {
-    const left = (start / DAY) * 100;
-    const width = (minutes / DAY) * 100;
-    start += minutes;
-    return {
-      key: bands[i]!.key,
-      left,
-      width,
-      /** Null on the residual, which CSS then hatches instead of filling. */
-      fill: BANDS[i] ?? null,
-      last: i === c.parts.length - 1,
-      title: `${c.label} · ${bands[i]!.label} · ${clock(minutes)}`,
-    };
-  });
-  return { label: c.label, blocks };
-});
-// The two ends of the sort carry the sentence under the figure, so they are
-// the two names worth finding without counting rows.
-const marked = rows.map((r, i) => ({ ...r, edge: i === 0 || i === rows.length - 1 }));
 
 /** The unit is in the figure's title, so the axis carries numbers only. */
 const HOURS = [0, 6, 12, 18, 24];
@@ -85,29 +131,37 @@ const reading =
     </div>
 
     <div class="wall" role="img" aria-label={reading}>
-      {
-        marked.map((r) => (
-          <div class="row">
-            <span class:list={['who', r.edge && 'edge']}>{r.label}</span>
-            <div class="day">
-              {r.blocks.map((b) => (
-                <span
-                  class:list={['seg', b.last && 'last']}
-                  style={
-                    `left:${b.left.toFixed(3)}%;` +
-                    // The gap between blocks comes off the width, never off the
-                    // position, so a block still starts where its hour says.
-                    `width:${b.last ? `${b.width.toFixed(3)}%` : `calc(${b.width.toFixed(3)}% - 2px)`}` +
-                    (b.fill ? `;background:${b.fill}` : '')
-                  }
-                  data-band={b.key}
-                  title={b.title}
-                />
-              ))}
+      <div class="rows">
+        {
+          rows.map((r) => (
+            <div class="row">
+              <span class:list={['who', r.edge && 'edge']}>{r.label}</span>
+              <div class="day">
+                {r.blocks.map((b) => (
+                  <span
+                    class:list={['seg', b.last && 'last']}
+                    style={
+                      `left:calc(${b.left.toFixed(3)}% + ${b.trimLeft}px);` +
+                      // The trim comes off the width, never off the position, so
+                      // a block still starts where its hour says it does.
+                      `width:calc(${b.width.toFixed(3)}% - ${b.trim}px)` +
+                      (b.fill ? `;background:${b.fill}` : '')
+                    }
+                    data-band={b.key}
+                    title={b.title}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ))
-      }
+          ))
+        }
+      </div>
+
+      <div class="threads" aria-hidden="true">
+        <svg viewBox={`0 0 1000 ${WALL.toFixed(3)}`} preserveAspectRatio="none" focusable="false">
+          {threads.map((d) => <path d={d} />)}
+        </svg>
+      </div>
     </div>
 
     <div class="axis" aria-hidden="true">
@@ -125,8 +179,8 @@ const reading =
 <style>
   .days {
     --who: 104px;
-    --row: 20px;
-    --gap: 4px;
+    --row: 25px;
+    --gap: 5px;
     margin: 0;
   }
 
@@ -184,6 +238,10 @@ const reading =
   }
 
   .wall {
+    position: relative;
+  }
+
+  .rows {
     display: flex;
     flex-direction: column;
     gap: var(--gap);
@@ -195,10 +253,6 @@ const reading =
     gap: 10px;
   }
 
-  .who.edge {
-    color: var(--ink);
-  }
-
   .who {
     flex: none;
     width: calc(var(--who) - 10px);
@@ -206,6 +260,11 @@ const reading =
     font-size: 11.5px;
     line-height: 1.2;
     color: var(--ink-soft);
+  }
+
+  /* The two ends of the sort carry the sentence under the figure. */
+  .who.edge {
+    color: var(--ink);
   }
 
   .day {
@@ -230,6 +289,32 @@ const reading =
       rgba(22, 24, 26, 0.34) 0 1px,
       transparent 1px 5px
     );
+  }
+
+  /* The box covers exactly the strip, never the column of names, and the SVG
+     inside it is stretched to fill it. The stroke is held at one pixel rather
+     than stretched with the box. */
+  .threads {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--who);
+    right: 0;
+    pointer-events: none;
+  }
+
+  .threads svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .threads path {
+    fill: none;
+    stroke: rgba(22, 24, 26, 0.42);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
   }
 
   .axis {

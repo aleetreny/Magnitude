@@ -12,6 +12,16 @@ export interface Country {
   label: string;
   /** Minutes in each band, in `bands` order, adding to 1,440. */
   parts: number[];
+  /** Latitude of the middle of the country's mainland. */
+  lat: number;
+}
+
+/** How far one boundary between two blocks wanders across the countries. */
+export interface Seam {
+  after: string;
+  min: number;
+  max: number;
+  range: number;
 }
 
 export interface Spread {
@@ -52,12 +62,7 @@ export interface TimeUse {
     meals: Spread;
     sleep: Spread;
   };
-  map: {
-    width: number;
-    height: number;
-    shapes: { id: string; d: string; on?: boolean }[];
-    spikes: { code: string; label: string; minutes: number; x: number; y: number }[];
-  };
+  seams: Seam[];
 }
 
 export const TIME_USE = raw as TimeUse;

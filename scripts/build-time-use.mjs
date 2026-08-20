@@ -18,11 +18,12 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { geoConicConformal, geoPath, geoArea, geoCentroid } from 'd3-geo';
+import { geoArea, geoCentroid } from 'd3-geo';
 import { feature } from 'topojson-client';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const IN = resolve(here, '../data/source/eurostat-tus_00age.json');
+/** Outlines, read only to place a country north or south of another. */
 const WORLD = resolve(here, '../node_modules/world-atlas/countries-50m.json');
 const OUT = resolve(here, '../src/data/time-use.json');
 
@@ -163,177 +164,68 @@ const median = BANDS.map((_, i) => {
   return Math.round((v[Math.floor((v.length - 1) / 2)] + v[Math.ceil((v.length - 1) / 2)]) / 2);
 });
 
-// ---------------------------------------------------------------- the map
+// ------------------------------------------------------------- geography
 
-/** ISO 3166-1 numeric, the id world-atlas keys its countries by. */
+/**
+ * One number per country: the latitude of the middle of its mainland.
+ *
+ * The post says the six countries furthest south all pass an hour and
+ * three quarters at the table and that only one of the six furthest north
+ * does, so "furthest south" has to be a measurement rather than an
+ * impression. It is taken on the largest polygon a country owns, not on
+ * everything it governs: France's centre of gravity including its overseas
+ * departments sits in the Atlantic.
+ *
+ * The outlines are a build-time dependency only. Nothing about them is
+ * written to the page.
+ */
 const ISO = {
   BE: '056', DE: '276', EE: '233', EL: '300', ES: '724', FR: '250',
   IT: '380', LU: '442', HU: '348', NL: '528', AT: '040', PL: '616',
   RO: '642', FI: '246', NO: '578', UK: '826', RS: '688', TR: '792',
 };
 
-const W = 760;
-const H = 620;
-
-/**
- * The window on Europe, walked degree by degree.
- *
- * It is a LineString rather than a rectangle on purpose. A conic projection
- * bends a box of longitudes and latitudes into a curved trapezium, so the fit
- * has to be measured along the whole edge, not at four corners, and a ring
- * wound the wrong way round would ask the projection to fit everything except
- * Europe.
- */
-function window(west, east, south, north, step = 1) {
-  const edge = [];
-  for (let x = west; x <= east; x += step) edge.push([x, south]);
-  for (let y = south; y <= north; y += step) edge.push([east, y]);
-  for (let x = east; x >= west; x -= step) edge.push([x, north]);
-  for (let y = north; y >= south; y -= step) edge.push([west, y]);
-  return { type: 'LineString', coordinates: edge };
-}
-
-const FRAME = window(-11, 41, 35, 70.5);
-
 const world = JSON.parse(readFileSync(WORLD, 'utf8'));
 const land = feature(world, world.objects.countries);
+const byId = new Map(land.features.map((f) => [String(f.id), f]));
 
-const projection = geoConicConformal()
-  .parallels([40, 62])
-  .rotate([-16, 0])
-  .fitSize([W, H], FRAME);
-const inFrame = geoPath(projection);
-projection.clipExtent([
-  [0, 0],
-  [W, H],
-]);
-
-/**
- * A path context that writes coordinates to a tenth of a pixel and throws away
- * anything too small to see. At 50m resolution the raw outlines of Europe come
- * to more than a megabyte of decimals nobody can perceive; rounded, and with
- * the specks dropped, the same coastline is a fortieth of that and looks
- * identical on screen.
- */
-const PLACES = 0;
-const SPECK = 2;
-
-function shrinkingContext() {
-  let out = [];
-  let ring = [];
-  let box = null;
-  const r = (n) => +n.toFixed(PLACES);
-
-  function flush() {
-    if (ring.length > 2 && box && box[2] - box[0] >= SPECK && box[3] - box[1] >= SPECK) {
-      out.push(ring.join('') + 'Z');
-    }
-    ring = [];
-    box = null;
-  }
-  function note(x, y) {
-    box = box
-      ? [Math.min(box[0], x), Math.min(box[1], y), Math.max(box[2], x), Math.max(box[3], y)]
-      : [x, y, x, y];
-  }
-  return {
-    moveTo(x, y) {
-      flush();
-      note(r(x), r(y));
-      ring.push(`M${r(x)} ${r(y)}`);
-    },
-    lineTo(x, y) {
-      const [px, py] = [r(x), r(y)];
-      const last = ring[ring.length - 1];
-      const step = `L${px} ${py}`;
-      // Rounding turns long runs of near-identical points into one point.
-      if (last !== step) {
-        note(px, py);
-        ring.push(step);
-      }
-    },
-    closePath() {
-      flush();
-    },
-    arc() {},
-    result() {
-      flush();
-      const d = out.join('');
-      out = [];
-      return d;
-    },
-  };
-}
-
-const context = shrinkingContext();
-const path = geoPath(projection, context);
-
-/** Only the countries with something inside the window get a path written. */
-const shown = land.features.filter((f) => {
-  const [[x0, y0], [x1, y1]] = inFrame.bounds(f);
-  return x1 > -40 && x0 < W + 40 && y1 > -40 && y0 < H + 40;
-});
-
-const shapes = shown
-  .map((f) => {
-    path(f);
-    return { id: f.id, d: context.result() };
-  })
-  .filter((s) => s.d);
-
-/**
- * A spike stands on the middle of the country's mainland, not on the middle of
- * everything it governs: France's centroid including Guiana sits in the
- * Atlantic, and a spike in the Atlantic says nothing about France.
- */
-function mainlandAnchor(f) {
+function mainlandLatitude(geo) {
+  const f = byId.get(ISO[geo]);
+  if (!f) throw new Error(`${geo}: no country ${ISO[geo]} in the world atlas`);
   const polygons =
     f.geometry.type === 'MultiPolygon'
       ? f.geometry.coordinates.map((c) => ({ type: 'Polygon', coordinates: c }))
       : [f.geometry];
   const biggest = polygons.reduce((a, p) => (geoArea(p) > geoArea(a) ? p : a));
-  return { screen: inFrame.centroid(biggest), sphere: geoCentroid(biggest) };
+  const lat = geoCentroid(biggest)[1];
+  if (!Number.isFinite(lat)) throw new Error(`${geo}: centroid did not resolve`);
+  return +lat.toFixed(2);
 }
 
-const byId = new Map(land.features.map((f) => [String(f.id), f]));
-const spikes = countries.map((c) => {
-  const id = ISO[c.code];
-  const f = byId.get(id);
-  if (!f) throw new Error(`${c.code}: no country ${id} in the world atlas`);
-  const { screen, sphere } = mainlandAnchor(f);
-  const [x, y] = screen;
-  if (!Number.isFinite(x) || !Number.isFinite(y)) {
-    throw new Error(`${c.code}: anchor did not project`);
-  }
-  return {
-    code: c.code,
-    label: c.label,
-    minutes: get(c, 'meals'),
-    x: +x.toFixed(1),
-    y: +y.toFixed(1),
-    /** Latitude of the same point, so "furthest south" is a fact, not a look. */
-    lat: +sphere[1].toFixed(2),
-  };
-});
+for (const c of countries) c.lat = mainlandLatitude(c.code);
 
 /** The tails of the map, by how far south the middle of the country lies. */
-const bySouth = [...spikes].sort((a, b) => a.lat - b.lat);
+const bySouth = [...countries].sort((a, b) => a.lat - b.lat);
 const THIRD = 6;
 const OVER = 105;
 const southern = bySouth.slice(0, THIRD);
 const northern = bySouth.slice(-THIRD);
 
-const surveyed = new Set(Object.values(ISO));
-const map = {
-  width: W,
-  height: H,
-  shapes: shapes.map((s) => ({ ...s, on: surveyed.has(String(s.id)) || undefined })),
-  spikes,
-  /** The two ends of the north-south reading the map is there to show. */
-  southern: southern.map((s) => s.code),
-  northern: northern.map((s) => s.code),
-  over: OVER,
-};
+/**
+ * How far each seam between two blocks wanders across the eighteen. This is
+ * what the threads on the chart draw, and the sentence under it quotes the
+ * widest of them.
+ */
+const seams = BANDS.slice(0, -1).map((_, k) => {
+  const at = countries.map((c) => c.parts.slice(0, k + 1).reduce((a, p) => a + p, 0));
+  return {
+    after: BANDS.slice(0, k + 1).map((b) => b.key).join('+'),
+    min: Math.min(...at),
+    max: Math.max(...at),
+    range: Math.max(...at) - Math.min(...at),
+  };
+});
+const widestSeam = seams.reduce((a, s) => (s.range > a.range ? s : a));
 
 // ------------------------------------------------------------- assertions
 
@@ -368,9 +260,12 @@ const QUOTED = [
   ['Greece, at work', of('EL').parts[idx.work], 167],
   ['largest residual', spread[idx.rest].max, 186],
   ['United Kingdom holds the largest residual', spread[idx.rest].highest.code === 'UK' ? 1 : 0, 1],
-  ['six southernmost above 1h45 at the table', southern.filter((s) => s.minutes > OVER).length, 6],
-  ['six northernmost above 1h45 at the table', northern.filter((s) => s.minutes > OVER).length, 1],
-  ['the northern one is the Netherlands', northern.find((s) => s.minutes > OVER)?.code === 'NL' ? 1 : 0, 1],
+  ['six southernmost above 1h45 at the table', southern.filter((c) => get(c, 'meals') > OVER).length, 6],
+  ['six northernmost above 1h45 at the table', northern.filter((c) => get(c, 'meals') > OVER).length, 1],
+  ['the northern one is the Netherlands', northern.find((c) => get(c, 'meals') > OVER)?.code === 'NL' ? 1 : 0, 1],
+  ['seams drawn as threads', seams.length, 5],
+  ['the widest seam wanders less than 1h45', widestSeam.range < 105 ? 1 : 0, 1],
+  ['how far the widest seam wanders', widestSeam.range, 103],
   ['median residual outside the United Kingdom', restMedianOthers, 132],
   ['United Kingdom, unclassified minutes', unclassified('UK'), 46],
   ['Spain, unclassified minutes', unclassified('ES'), 2],
@@ -412,14 +307,14 @@ const out = {
     meals,
     sleep,
   },
-  map,
+  seams,
 };
 
 writeFileSync(OUT, JSON.stringify(out));
 const kb = (s) => `${(Buffer.byteLength(s) / 1024).toFixed(0)} KB`;
 console.log(
   `${countries.length} countries · sleep ${hm(sleep.min)}–${hm(sleep.max)} · ` +
-    `table ${hm(meals.min)}–${hm(meals.max)} · widest block ${widest.label} ${hm(widest.range)} apart\n` +
-    `map ${map.shapes.length} shapes, ${spikes.length} spikes · ` +
+    `table ${hm(meals.min)}–${hm(meals.max)} · widest block ${widest.label} ${hm(widest.range)} apart · ` +
+    `widest seam ${hm(widestSeam.range)} · ` +
     `${kb(readFileSync(IN, 'utf8'))} → ${kb(JSON.stringify(out))}`,
 );

@@ -1,52 +1,82 @@
 # The constellation
 
-A prototype of a different shape for MAGNITUDE: no articles, no prose. Five
-questions are five stars. Zooming into one does not open a page, it takes the
-star apart: the point of light *is* the chart, folded up, and it comes back
-apart as it grows on screen.
+No articles, no prose. Five questions are five stars in a real sky, and you fly
+to them. Arriving does not open a page: the star's light floods the screen, and
+when it clears you are somewhere else, with that star's own colour, its own
+clouds, its own dust hanging in the air, and its chart building itself out of
+the light in front of you.
 
-Open `constellation.html`. Nothing to install, nothing to serve.
+Open `constellation.html`. Nothing to install, nothing to serve. `node
+bundle.mjs` rebuilds `constellation.json` from `src/data/`.
 
-## What is worth keeping
+Files: `engine.js` camera, star fields, nebulae · `journey.js` the flight ·
+`render.js` the scene · `chart.js` the charts · `input.js` control and start-up.
+`constellation.html` is all of them concatenated with the data inlined.
 
-**The camera is Van Wijk and Nuij's smooth zoom-and-pan** (`flight()` in
-`app.js`). Given two views of the world it returns the path a viewer perceives
-as moving at a constant speed: it pulls back far enough to cover the ground,
-then drops in. Measured on the path from the electricity star to the day star,
-the camera goes from 1,460 world units wide out to 3,283 at the halfway point
-and back down to 1,330. That pull-back is not an effect added on top; it falls
-out of the maths, which is why it never overshoots and never crawls.
-Interpolating x, y and scale separately with an ease curve is what makes most
-zooming interfaces lurch.
+## Why it is in three dimensions
 
-**Nothing about the unfolding knows about clicks.** `resolveOf(star)` is a pure
-function of the camera width and that star's own bounding box. Zoom by wheel, by
-pinch, by keyboard or by flight and the chart comes apart at exactly the same
-point. There is no open/closed state to keep in sync, which is the usual source
-of a half-open chart stuck on screen.
+Because a flat map zoomed in and out can only slide, and sliding is what tells
+you it is a web page. Everything is projected by hand from real positions at
+real depths, so near stars tear past while far ones hold still, and that
+difference is the whole sensation of travel. The constellation itself has
+depth: the third axis of the feature vector is distance, so a shape from out
+here is a shape you fly *into*.
 
-**Each star is framed by its own chart, not by one number.** Charts are not all
-the same shape, so `fitW()` measures each one and binds on whichever side runs
-out first. It also frames the chart into the band left between the question
-above and the source below, so the words sit in space the chart was never given.
+The sky is in two halves and the split matters. **Three thousand deep stars sit
+on a shell fifty to a hundred and thirty thousand units out**, wrapping all the
+way round, so half of them are always behind you and none of them move: that is
+what makes the constellation still the same constellation after a journey. A
+**nearer drift field is recycled as you pass it**, so the travel never runs out
+of space to travel through.
 
-**The furniture is generated with the data.** Rules, ticks and words come out of
-`bundle.mjs` as primitives in local coordinates, and arrive only once a chart is
-mostly open, so a half-open star stays a picture rather than a diagram.
+## The flight has four legs, not one tween
+
+1. **Turn.** The camera yaws and pitches to face the star, banking up to a
+   quarter of a radian into the turn and back out of it.
+2. **Go.** A cubic path whose first control point sits *behind where you are
+   standing*, so the camera retreats before it commits, and whose second sits
+   behind the target, so it arrives along the star's own axis instead of
+   sideswiping it. The camera covers three or four times the straight-line
+   distance, and that extra distance is why it reads as flight: five hundred
+   units of drift is a pan, six thousand is a journey. The field of view widens
+   by a third at peak speed and comes back.
+3. **The light of arriving.** A white flood centred on the star. This is the
+   join: it is what lets one sky become a different sky without the eye
+   catching the cut.
+4. **And then you are somewhere else.** The marks fly out of the star along
+   their own paths, each with its own lag and its own depth to fall through, so
+   the chart blooms from the middle rather than snapping open. The rules and
+   labels draw themselves on last, once the marks have stopped moving.
+
+Streak length, bloom, chromatic aberration and vignette all key off one number:
+how far the camera moved this frame, measured **per millisecond**, not per
+frame. A frame that took a quarter of a second because the tab was busy is not
+the camera moving fast, and treating it as such smears the whole screen for no
+reason. That bug is the reason the number is a rate.
+
+## Traps worth remembering
+
+- **Bloom is a light effect, not a paint effect.** Composited at full strength
+  it turns every chart into neon. It belongs to speed and to the flash; while a
+  chart is being read it drops to a third, and a mark stops feeding the glow
+  buffer once it has landed.
+- **Dust is two pixels, whatever the camera is doing.** Scaling motes with
+  perspective turned the room into a bokeh photograph.
+- **A cloud tile has to be feathered to nothing at its edges** and blurred once
+  at generation. Without the mask you see the square; without the blur, a
+  420-pixel tile blown up to forty thousand units shows every blob it was built
+  from, and blobs at that size read as pattern.
+- **A flat tinted wash reads as fog.** The colour of a star's world comes from a
+  radial light *behind the chart*, where the star actually is.
 
 ## Where the stars sit
 
-Positions are an embedding of **stated features, not of language**. Four axes
-describe what a question is about; the pairwise distances are laid out in two
-dimensions by stress majorization. Each star is joined to its two nearest
-neighbours, and those lines are the constellation. Say so plainly anywhere this
-ships: it is a hand-written feature vector, not a model.
+An embedding of **stated features, not of language**: four axes written by
+hand describing what a question is about, laid out by stress majorization, each
+star joined to its two nearest neighbours. Say so plainly anywhere this ships.
 
-## What is not built
+## Not built
 
-Touch has pan, pinch and tap, but no inertia. Every chart is real data from
-`src/data/`, but only the day and the electricity dial are as legible as the
-published versions. There is no route, no deep link and no share target: the
-sky is one page.
-
-`node bundle.mjs` rebuilds `constellation.json` from `src/data/`.
+Touch pans, pinches and taps, but there is no inertia. All five charts are real
+data from `src/data/`, but only the day wall and the electricity dial are as
+legible as the published versions. No deep links: the sky is one page.

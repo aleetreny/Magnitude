@@ -69,12 +69,18 @@ const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.
 const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
 const cy = (Math.max(...ys) + Math.min(...ys)) / 2;
 const SKY = 2200;
+/**
+ * Depth is the third axis of the feature vector, so a constellation that looks
+ * like a shape from here is a shape in three dimensions when you fly into it.
+ * Flat stars would give the game away the moment the camera moves.
+ */
 const at = Object.fromEntries(
   KEYS.map((k, i) => [
     k,
     [
-      +(((raw[i][0] - cx) / span) * SKY * 1.35).toFixed(1),
-      +(((raw[i][1] - cy) / span) * SKY * 0.82).toFixed(1),
+      +(((raw[i][0] - cx) / span) * SKY * 1.6).toFixed(1),
+      +(((raw[i][1] - cy) / span) * SKY * 0.95).toFixed(1),
+      +((FEATURES[k][2] - 0.5) * 5200).toFixed(1),
     ],
   ]),
 );
